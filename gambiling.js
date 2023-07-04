@@ -2,6 +2,7 @@
 
 const config = {
     "-1" : 0, 
+    "0" : 1,
     "1" : 2,
     "2" : 4,
     "3" : 8,
@@ -70,6 +71,15 @@ const refreshStoppedCheckTimer = () => {
 const startDisconnectionCheck = () => {
 
     const findDisconnectionText = () => {
+    
+        // const matches = [];
+        // for (const div of document.querySelectorAll('div.title--f4c0d')) {
+        //     if (div.textContent.includes("等待連接") || div.textContent.includes("等待连接")) {
+        //         matches.push(div);
+        //     }
+        // }
+        //div[data-role='connection-message'] 
+        //const svgLoadingIconFirst = document.querySelector("div.icon--74776 > svg.icon--44cab.isAnimated--65bd1");
 
         return new Promise((resolve,reject) => {
             const getLoadingIcon = () => {
@@ -228,6 +238,35 @@ const resetCardCount = () => {
     cardCount.multiplication = 0;
 }
 
+
+const nativeCardCounting = (onCardFounded) => {
+    const firstHand = document.querySelectorAll("div[data-role='firstHand-cards'] > div[data-role='virtual-card'] > div > div > div > span")
+    const secondHand = document.querySelectorAll("div[data-role='secondHand-cards'] > div[data-role='virtual-card'] > div > div > div > span");
+    const dealerCard = document.querySelectorAll("div[data-role='dealer-virtual-cards'] > div > div > span");
+
+    const fetchHands = [];
+
+  
+    [firstHand,secondHand,dealerCard].forEach((hands) => {
+        hands.forEach((hand) => {
+            fetchHands.push(getCardNumber(hand))
+        });
+    
+    })
+    if(fetchHands.length !== 0){
+        if(fetchHands.length > currentHands.length && dealerCard.length === 1){
+            console.log("new player card found", fetchHands.length - currentHands.length);
+            onCardFounded && onCardFounded()
+        }
+        currentHands = structuredClone(fetchHands)
+    }
+    
+    //console.log(getCurrentTrueCount(),visionTemp)
+
+   
+}
+
+
 let visionTemp = []
 const visionAi = async () => {
     console.log("running ai");
@@ -245,7 +284,7 @@ const visionAi = async () => {
         });
     }
     const video = await waitVideoElement();
-    let model;
+    let model, RedCardModel;
     let cameraMode = "environment"; // or "user"
 
 
@@ -261,11 +300,9 @@ const visionAi = async () => {
     
     const body = document.querySelector("body");
     Promise.all([
-        //startVideoStreamPromise,
         loadModelPromise
     ]).then(function() {
         //body.classList.remove("loading");
-        //resizeCanvas();
         detectFrame();
     });
 
@@ -278,9 +315,6 @@ const visionAi = async () => {
         )
       
     }
-    
-    let prevTime;
-    let pastFrameTimes = [];
 
     const cardClasses = {
         "A": {
@@ -340,10 +374,10 @@ const visionAi = async () => {
             name: "K",
             count : 0
         },
-        // "RED": {
-        //     name: "RED",
-        //     count : 0
-        // }
+        "RED": {
+            name: "RED",
+            count : 0
+        }
     }
     let emptyAccumulator = 0;
     const visionCardCount = (card) => {
@@ -384,158 +418,91 @@ const visionAi = async () => {
    
     }
        
+    const detection = function(predictions) {
+        const firstHand = document.querySelectorAll("div[data-role='firstHand-cards'] > div[data-role='virtual-card'] > div > div > div > span")
+
+        var predictionsParsed = {};
+        //console.log(predictions[0] ? predictions[0] : predictions);
+
+        
+        if(predictions.length !== 0){
+
+            visionCardCount(predictions[0].class);
+            cardFound = true;
+          
+        }else{
+            emptyAccumulator++;
+            
+            if(emptyAccumulator > 60 && firstHand.length >= 2){
+                if(cardFound){
+                  
+                    const VisionCardFound = findTheHighestCount();
+                    if(VisionCardFound){
+                        console.log("card count",VisionCardFound);
+                        cardFound = false;
+                        visionTemp.push(VisionCardFound.name);
+                    }
+               
+                 
+                }
+              
+                refreshCardCounts();
+                emptyAccumulator = 0;
+            }
+        }
+    
+
+
+
+        optimizedAnimationFrame(detectFrame);
+
+    }
+
 
     const detectFrame = function() {
-        const firstHand = document.querySelectorAll("div[data-role='firstHand-cards'] > div[data-role='virtual-card'] > div > div > div > span")
-        const secondHand = document.querySelectorAll("div[data-role='secondHand-cards'] > div[data-role='virtual-card'] > div > div > div > span");
-        const dealerCard = document.querySelectorAll("div[data-role='dealer-virtual-cards'] > div > div > span");
-        const nativeCardCounting = (onCardFounded) => {
-  
-            const fetchHands = [];
- 
-          
-            [firstHand,secondHand,dealerCard].forEach((hands) => {
-                hands.forEach((hand) => {
-                    fetchHands.push(getCardNumber(hand))
-                });
-            
-            })
-            if(fetchHands.length !== 0){
-                if(fetchHands.length > currentHands.length && dealerCard.length === 1){
-                    console.log("new player card found", fetchHands.length - currentHands.length);
-                    onCardFounded && onCardFounded()
-                }
-                currentHands = structuredClone(fetchHands)
-            }
-            
-        
-           
+
+        const getDealerCardPoint = () => {
+            const scoreElement = document.querySelector("div.dealerScore--f29f0 > div > div[data-role='score']");
+            const score = parseInt(scoreElement.textContent)
+            return score ? score : 0
         }
 
+        const dealerPoint = getDealerCardPoint();
+        if(dealerPoint >= 17){
+            storeVisionCardCounting();
+        }
+
+        if(!model) return optimizedAnimationFrame(detectFrame);
+
+        model.configure({
+            threshold: 0.7,
+            overlap: 1,
+            max_objects: 1
+        });
+
+
+
+        model.detect(video).then(detection).catch(function(e) {
+            console.log("CAUGHT", e);
+            optimizedAnimationFrame(detectFrame);
+        });
+    };
+}    
+
+const runCardCounting = () => {
+    setInterval(() => {
         nativeCardCounting(() => {
             emptyAccumulator = 0;
             refreshCardCounts();
             visionTemp = [];
             console.log("refreshed", emptyAccumulator)
         });
-
- 
-        const getDealerCardPoint = () => {
-            const scoreElement =document.querySelector("div.dealerScore--f29f0 > div > div[data-role='score']");
-            const score = parseInt(scoreElement.textContent)
-            return score ? score : 0
-        }
-        const dealerPoint = getDealerCardPoint();
-        if(dealerPoint >= 17){
-            storeVisionCardCounting();
-            if(isRedCardDetected){
-                resetCardCount();
-                isRedCardDetected = false
-            }
-        }
-        if(!model) return optimizedAnimationFrame(detectFrame);
-        model.configure({
-            threshold: 0.5,
-            overlap: 1,
-            max_objects: 1
-        });
-
-
     
+    },2)
 
-        model.detect(video).then(function(predictions) {
-            var predictionsParsed = {};
-            //console.log(predictions[0] ? predictions[0] : predictions);
+    visionAi();
+}
 
-            
-            if(predictions.length !== 0){
-                console.log(predictions[0]);
-                if(predictions[0].class === "RED"){
-                    isRedCardDetected = true
-                }else{
-                    visionCardCount(predictions[0].class);
-                    cardFound = true;
-                }
-           
-              
-            }else{
-                emptyAccumulator++;
-                
-                if(emptyAccumulator > 60 && firstHand.length >= 2){
-                    if(cardFound){
-                      
-                        const VisionCardFound = findTheHighestCount();
-                        if(VisionCardFound){
-                            console.log("card count",VisionCardFound);
-                            cardFound = false;
-                            visionTemp.push(VisionCardFound.name);
-                        }
-                   
-                     
-                    }
-                  
-                    refreshCardCounts();
-                    emptyAccumulator = 0;
-                }
-            }
-           
-
-
-
-            predictions.forEach((p,i) => {
-                if(!predictionsParsed[p.class]) {
-                    predictionsParsed[p.class] = p;
-                } 
-                else {
-                    var existing = predictionsParsed[p.class];
-
-                    var top = Math.min( (existing.bbox.y - existing.bbox.height/2), (p.bbox.y - p.bbox.height/2) );
-                    var bottom = Math.max( (existing.bbox.y + existing.bbox.height/2), (p.bbox.y + p.bbox.height/2));
-                    var left = Math.min( (existing.bbox.x - existing.bbox.width/2), (p.bbox.x - p.bbox.width/2) );
-                    var right = Math.max( (existing.bbox.x + existing.bbox.width/2), (p.bbox.x + p.bbox.width/2));
-
-                    existing.bbox.x = (left + right) / 2;
-                    existing.bbox.y = (top + bottom) / 2;
-
-                    existing.bbox.width = (right - left);
-                    existing.bbox.height = (bottom - top);
-
-                }
-            })
-  
-            const objectToArray = (obj) => {
-                const array = [];
-                Object.keys(obj).forEach((key) => {
-                    array.push(obj[key]);
-                });
-                return array
-            }
-            let cards = objectToArray(predictionsParsed);
-
-
-
-            optimizedAnimationFrame(detectFrame);
-            //renderPredictions(cards);
-
-            if(prevTime) {
-                pastFrameTimes.push(Date.now() - prevTime);
-                if(pastFrameTimes.length > 30) pastFrameTimes.shift();
-
-                let totalFPS = 0;
-                pastFrameTimes.forEach((t) => {
-                    totalFPS += t/1000;
-                });
-
-                var fps = pastFrameTimes.length / totalFPS;
-                //document.querySelector("#fps").textContent = Math.round(fps);
-            }
-            prevTime = Date.now();
-        }).catch(function(e) {
-            // console.log("CAUGHT", e);
-            optimizedAnimationFrame(detectFrame);
-        });
-    };
-}    
 
 const totalDecks = 8;
 const getCurrentTrueCount = () => {
@@ -731,7 +698,13 @@ const actionTypes = {
         const {dealerCard, myCards} = await getElements(1);
         handCheck(dealerCard, myCards, secondHandCheck);
 
-     
+        //data-role="status-text" .textContent
+    
+
+        //getElements 
+
+        //buttonContainer--bd9a6 isNotPreferredDecision--a6f1f //split button
+        //cardContainer--b4b58 second card 
     },
     forcedResolved: async (oldDealerCard, oldMyCards, callbackOnResolve, isSecondHand) => {
 
@@ -1771,7 +1744,7 @@ const firstRun = () => {
 
 
 
-let enableWhatsappFunction = true;
+let enableWhatsappFunction = false;
 let enableSendBalance = false;
 
 const startBetting = async () => {
@@ -1827,7 +1800,7 @@ const runBtnOnClick = () => {
             startDisconnectionCheck(); 
         }
         togglePlusTableButton(false);
-        visionAi();
+        runCardCounting();
         //cardCounting();
         startBetting();
     }
@@ -1989,7 +1962,7 @@ const inertButton = () => {
     const body = document.querySelector("body");
     body.appendChild(buttonsContainer);
 
-    console.log("auto gambling V47_beta_wts inserted")
+    console.log("auto gambling V48_beta_wts inserted")
 }
 
 const dataCheck = () => {
