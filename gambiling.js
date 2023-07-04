@@ -227,7 +227,6 @@ const buttonType = {
 const cardCount = {
     playedCard: 0,
     multiplication: 0
-
 }
 
 let currentHands = [];
@@ -238,6 +237,76 @@ const resetCardCount = () => {
     cardCount.multiplication = 0;
 }
 
+
+const cardClasses = {
+    "A": {
+        name: "A",
+        count : 0
+    },
+    "2": {
+        name: "2",
+        count : 0
+    },
+    "3": {
+        name: "3",
+        count : 0
+    },
+    "4": {
+        name: "4",
+        count : 0
+    },
+    "5": {
+        name: "5",
+        count : 0
+    },
+    "6": {
+        name: "6",
+        count : 0
+    },
+    "7": {
+        name: "7",
+        count : 0
+    },
+    "8": {
+        name: "8",
+        count : 0
+    },
+    "9": {
+        name: "9",
+        count : 0
+    },
+    "10": {
+        name: "T",
+        count : 0
+    },
+    "T": {
+        name: "T",
+        count : 0
+    },
+    "J": {
+        name: "J",
+        count : 0
+    },
+    "Q": {
+        name: "Q",
+        count : 0
+    }
+    ,
+    "K": {
+        name: "K",
+        count : 0
+    },
+    "RED": {
+        name: "RED",
+        count : 0
+    }
+}
+
+const refreshCardCounts = () => {
+    Object.keys(cardClasses).forEach((card) => {
+        cardClasses[card].count = 0;
+    })
+}
 
 const nativeCardCounting = (onCardFounded) => {
     const firstHand = document.querySelectorAll("div[data-role='firstHand-cards'] > div[data-role='virtual-card'] > div > div > div > span")
@@ -316,78 +385,12 @@ const visionAi = async () => {
       
     }
 
-    const cardClasses = {
-        "A": {
-            name: "A",
-            count : 0
-        },
-        "2": {
-            name: "2",
-            count : 0
-        },
-        "3": {
-            name: "3",
-            count : 0
-        },
-        "4": {
-            name: "4",
-            count : 0
-        },
-        "5": {
-            name: "5",
-            count : 0
-        },
-        "6": {
-            name: "6",
-            count : 0
-        },
-        "7": {
-            name: "7",
-            count : 0
-        },
-        "8": {
-            name: "8",
-            count : 0
-        },
-        "9": {
-            name: "9",
-            count : 0
-        },
-        "10": {
-            name: "T",
-            count : 0
-        },
-        "T": {
-            name: "T",
-            count : 0
-        },
-        "J": {
-            name: "J",
-            count : 0
-        },
-        "Q": {
-            name: "Q",
-            count : 0
-        }
-        ,
-        "K": {
-            name: "K",
-            count : 0
-        },
-        "RED": {
-            name: "RED",
-            count : 0
-        }
-    }
+
     let emptyAccumulator = 0;
     const visionCardCount = (card) => {
         cardClasses[card].count++;
     }
-    const refreshCardCounts = () => {
-        Object.keys(cardClasses).forEach((card) => {
-            cardClasses[card].count = 0;
-        })
-    }
+
 
     const findTheHighestCount = () => {
         let highestCountCard = undefined;
