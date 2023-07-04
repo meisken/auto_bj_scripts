@@ -1965,7 +1965,7 @@ const inertButton = () => {
     const body = document.querySelector("body");
     body.appendChild(buttonsContainer);
 
-    console.log("auto gambling V48_beta_wts inserted")
+    console.log("auto gambling V48.1_beta_wts inserted")
 }
 
 const dataCheck = () => {
