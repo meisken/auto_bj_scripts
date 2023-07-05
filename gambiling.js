@@ -227,6 +227,7 @@ const buttonType = {
 const cardCount = {
     playedCard: 0,
     multiplication: 0
+
 }
 
 let currentHands = [];
@@ -236,105 +237,6 @@ const resetCardCount = () => {
     cardCount.playedCard = 0;
     cardCount.multiplication = 0;
 }
-
-
-const cardClasses = {
-    "A": {
-        name: "A",
-        count : 0
-    },
-    "2": {
-        name: "2",
-        count : 0
-    },
-    "3": {
-        name: "3",
-        count : 0
-    },
-    "4": {
-        name: "4",
-        count : 0
-    },
-    "5": {
-        name: "5",
-        count : 0
-    },
-    "6": {
-        name: "6",
-        count : 0
-    },
-    "7": {
-        name: "7",
-        count : 0
-    },
-    "8": {
-        name: "8",
-        count : 0
-    },
-    "9": {
-        name: "9",
-        count : 0
-    },
-    "10": {
-        name: "T",
-        count : 0
-    },
-    "T": {
-        name: "T",
-        count : 0
-    },
-    "J": {
-        name: "J",
-        count : 0
-    },
-    "Q": {
-        name: "Q",
-        count : 0
-    }
-    ,
-    "K": {
-        name: "K",
-        count : 0
-    },
-    "RED": {
-        name: "RED",
-        count : 0
-    }
-}
-
-const refreshCardCounts = () => {
-    Object.keys(cardClasses).forEach((card) => {
-        cardClasses[card].count = 0;
-    })
-}
-
-const nativeCardCounting = (onCardFounded) => {
-    const firstHand = document.querySelectorAll("div[data-role='firstHand-cards'] > div[data-role='virtual-card'] > div > div > div > span")
-    const secondHand = document.querySelectorAll("div[data-role='secondHand-cards'] > div[data-role='virtual-card'] > div > div > div > span");
-    const dealerCard = document.querySelectorAll("div[data-role='dealer-virtual-cards'] > div > div > span");
-
-    const fetchHands = [];
-
-  
-    [firstHand,secondHand,dealerCard].forEach((hands) => {
-        hands.forEach((hand) => {
-            fetchHands.push(getCardNumber(hand))
-        });
-    
-    })
-    if(fetchHands.length !== 0){
-        if(fetchHands.length > currentHands.length && dealerCard.length === 1){
-            console.log("new player card found", fetchHands.length - currentHands.length);
-            onCardFounded && onCardFounded()
-        }
-        currentHands = structuredClone(fetchHands)
-    }
-    
-    //console.log(getCurrentTrueCount(),visionTemp)
-
-   
-}
-
 
 let visionTemp = []
 const visionAi = async () => {
@@ -357,19 +259,34 @@ const visionAi = async () => {
     let cameraMode = "environment"; // or "user"
 
 
+
+
     const loadModelPromise = new Promise(function(resolve, reject) {
         roboflow.auth({
             publishable_key: publishable_key
         }).load(toLoad).then(function(m) {
             model = m;
             window.model = model;
+            console.log("Card Vision Model loaded")
             resolve();
         });
     });
-    
+    const loadRedCardModelPromise = new Promise(function(resolve, reject) {
+        roboflow.auth({
+            publishable_key: publishable_key
+        }).load(RedCardToLoad).then(function(m) {
+            console.log("Red Card Vision Model loaded")
+            RedCardModel = m;
+            //window.model = model;
+            resolve();
+        });
+    });
+
     const body = document.querySelector("body");
     Promise.all([
-        loadModelPromise
+        //startVideoStreamPromise,
+        loadModelPromise,
+        loadRedCardModelPromise
     ]).then(function() {
         //body.classList.remove("loading");
         detectFrame();
@@ -386,11 +303,78 @@ const visionAi = async () => {
     }
 
 
+    const cardClasses = {
+        "A": {
+            name: "A",
+            count : 0
+        },
+        "2": {
+            name: "2",
+            count : 0
+        },
+        "3": {
+            name: "3",
+            count : 0
+        },
+        "4": {
+            name: "4",
+            count : 0
+        },
+        "5": {
+            name: "5",
+            count : 0
+        },
+        "6": {
+            name: "6",
+            count : 0
+        },
+        "7": {
+            name: "7",
+            count : 0
+        },
+        "8": {
+            name: "8",
+            count : 0
+        },
+        "9": {
+            name: "9",
+            count : 0
+        },
+        "10": {
+            name: "T",
+            count : 0
+        },
+        "T": {
+            name: "T",
+            count : 0
+        },
+        "J": {
+            name: "J",
+            count : 0
+        },
+        "Q": {
+            name: "Q",
+            count : 0
+        }
+        ,
+        "K": {
+            name: "K",
+            count : 0
+        },
+        "RED": {
+            name: "RED",
+            count : 0
+        }
+    }
     let emptyAccumulator = 0;
     const visionCardCount = (card) => {
         cardClasses[card].count++;
     }
-
+    const refreshCardCounts = () => {
+        Object.keys(cardClasses).forEach((card) => {
+            cardClasses[card].count = 0;
+        })
+    }
 
     const findTheHighestCount = () => {
         let highestCountCard = undefined;
@@ -421,90 +405,116 @@ const visionAi = async () => {
    
     }
        
-    const detection = function(predictions) {
+
+    const detectFrame = async function() {
         const firstHand = document.querySelectorAll("div[data-role='firstHand-cards'] > div[data-role='virtual-card'] > div > div > div > span")
-
-        var predictionsParsed = {};
-        //console.log(predictions[0] ? predictions[0] : predictions);
-
+        const secondHand = document.querySelectorAll("div[data-role='secondHand-cards'] > div[data-role='virtual-card'] > div > div > div > span");
+        const dealerCard = document.querySelectorAll("div[data-role='dealer-virtual-cards'] > div > div > span");
         
-        if(predictions.length !== 0){
-
-            visionCardCount(predictions[0].class);
-            cardFound = true;
+        const nativeCardCounting = (onCardFounded) => {
+  
+            const fetchHands = [];
+ 
           
-        }else{
-            emptyAccumulator++;
+            [firstHand,secondHand,dealerCard].forEach((hands) => {
+                hands.forEach((hand) => {
+                    fetchHands.push(getCardNumber(hand))
+                });
             
-            if(emptyAccumulator > 60 && firstHand.length >= 2){
-                if(cardFound){
-                  
-                    const VisionCardFound = findTheHighestCount();
-                    if(VisionCardFound){
-                        console.log("card count",VisionCardFound);
-                        cardFound = false;
-                        visionTemp.push(VisionCardFound.name);
-                    }
-               
-                 
+            })
+            if(fetchHands.length !== 0){
+                if(fetchHands.length > currentHands.length && dealerCard.length === 1){
+                    console.log("new player card found", fetchHands.length - currentHands.length);
+                    onCardFounded && onCardFounded()
                 }
-              
-                refreshCardCounts();
-                emptyAccumulator = 0;
+                currentHands = structuredClone(fetchHands)
             }
-        }
-    
-
-
-
-        optimizedAnimationFrame(detectFrame);
-
-    }
-
-
-    const detectFrame = function() {
-
-        const getDealerCardPoint = () => {
-            const scoreElement = document.querySelector("div.dealerScore--f29f0 > div > div[data-role='score']");
-            const score = parseInt(scoreElement.textContent)
-            return score ? score : 0
+            
+            //console.log(getCurrentTrueCount(),visionTemp)
+        
+           
         }
 
-        const dealerPoint = getDealerCardPoint();
-        if(dealerPoint >= 17){
-            storeVisionCardCounting();
-        }
-
-        if(!model) return optimizedAnimationFrame(detectFrame);
-
-        model.configure({
-            threshold: 0.7,
-            overlap: 1,
-            max_objects: 1
-        });
-
-
-
-        model.detect(video).then(detection).catch(function(e) {
-            console.log("CAUGHT", e);
-            optimizedAnimationFrame(detectFrame);
-        });
-    };
-}    
-
-const runCardCounting = () => {
-    setInterval(() => {
         nativeCardCounting(() => {
             emptyAccumulator = 0;
             refreshCardCounts();
             visionTemp = [];
             console.log("refreshed", emptyAccumulator)
         });
-    
-    },2)
 
-    visionAi();
-}
+ 
+        const getDealerCardPoint = () => {
+            const scoreElement = document.querySelector("div.dealerScore--f29f0 > div > div[data-role='score']");
+            const score = parseInt(scoreElement.textContent)
+            return score ? score : 0
+        }
+        const dealerPoint = getDealerCardPoint();
+
+        if(dealerPoint >= 17){
+            storeVisionCardCounting();
+        }
+
+        if(!model || !RedCardModel) return optimizedAnimationFrame(detectFrame);
+
+        model.configure({
+            threshold: 0.8,
+            overlap: 1,
+            max_objects: 1
+        });
+        RedCardModel.configure({
+            threshold: 0.92,
+            overlap: 1,
+            max_objects: 1
+        })
+
+        try{
+            const [predictions,RedCardPredictions] = await Promise.all([
+                model.detect(video),
+                RedCardModel.detect(video)
+            ]);
+
+            
+            if(RedCardPredictions.length !== 0){
+                resetCardCount();
+                console.log("reset card count")
+            }else if(predictions.length !== 0){
+                visionCardCount(predictions[0].class);
+                cardFound = true;
+           
+              
+            }else{
+                emptyAccumulator++;
+                
+                if(emptyAccumulator >= 60 && firstHand.length >= 2){
+                    if(cardFound){
+                      
+                        const VisionCardFound = findTheHighestCount();
+                        if(VisionCardFound){
+                            console.log("card count",VisionCardFound);
+                            cardFound = false;
+                            visionTemp.push(VisionCardFound.name);
+                        }
+                   
+                     
+                    }
+                  
+                    refreshCardCounts();
+                    emptyAccumulator = 0;
+                }
+            }
+        
+
+
+
+            optimizedAnimationFrame(detectFrame);
+
+        }catch(err){
+            console.log("CAUGHT", err);
+        }
+    
+    };
+
+}    
 
 
 const totalDecks = 8;
@@ -539,7 +549,7 @@ const storeCardCountingHistory = () => {
    
 }
 
-const handResolve = (callbackOnResolve) => {
+const handleResolve = (callbackOnResolve) => {
 
     if(callbackOnResolve){
         console.log("run callback");
@@ -582,7 +592,7 @@ const actionTypes = {
             //div[data-role='secondHand-cards'] > div[data-role='virtual-card'] > div > div > div > span
             
         }catch(err){
-            handResolve(callbackOnResolve)
+            handleResolve(callbackOnResolve)
         }
     },
     stand: async (oldDealerCard, oldMyCards, callbackOnResolve, isSecondHand) => {
@@ -595,7 +605,7 @@ const actionTypes = {
             console.log("stand button clicked");
         }
    
-        handResolve(callbackOnResolve)
+        handleResolve(callbackOnResolve)
    
     },
     standThree: async (oldDealerCard, oldMyCards, callbackOnResolve, isSecondHand) => {
@@ -641,7 +651,7 @@ const actionTypes = {
 
         if(oldMyCards.length === 2){
             console.log("blackjack !!!");
-            handResolve(callbackOnResolve)
+            handleResolve(callbackOnResolve)
             return
         }else{
             actionTypes.forcedResolved(oldDealerCard, oldMyCards, callbackOnResolve, isSecondHand);
@@ -660,7 +670,7 @@ const actionTypes = {
                 console.log("double button clicked");
             }
          
-            handResolve(callbackOnResolve)
+            handleResolve(callbackOnResolve)
         }else{
             actionTypes.hit(oldDealerCard, oldMyCards, callbackOnResolve, isSecondHand);
         }
@@ -716,7 +726,7 @@ const actionTypes = {
         console.log("forced resolved");
         
 
-        handResolve(callbackOnResolve)
+        handleResolve(callbackOnResolve)
    
     },
     splitThenResolved:  async (oldDealerCard, oldMyCards, callbackOnResolve, isSecondHand) => {
@@ -732,7 +742,7 @@ const actionTypes = {
             console.log("split button clicked");
         }
     
-        handResolve(callbackOnResolve);
+        handleResolve(callbackOnResolve);
 
     }
 }
@@ -1566,7 +1576,7 @@ const handCheck = async (dealerCard, myCards, callbackOnResolve, isSecondHand) =
     console.log(`card counts: ${myCards.length}`)
     if(myCards.length >= 6){
         console.log("Six Card Charlie!!!");
-        handResolve(callbackOnResolve)
+        handleResolve(callbackOnResolve)
     }
 
     const cardNumbers = [];
@@ -1584,7 +1594,7 @@ const handCheck = async (dealerCard, myCards, callbackOnResolve, isSecondHand) =
 
     if(playerValue > 21){
         console.log("bust");
-        handResolve(callbackOnResolve);
+        handleResolve(callbackOnResolve);
         return
       
     }
@@ -1803,7 +1813,7 @@ const runBtnOnClick = () => {
             startDisconnectionCheck(); 
         }
         togglePlusTableButton(false);
-        runCardCounting();
+        visionAi();
         //cardCounting();
         startBetting();
     }
@@ -1965,7 +1975,7 @@ const inertButton = () => {
     const body = document.querySelector("body");
     body.appendChild(buttonsContainer);
 
-    console.log("auto gambling V48.1_beta_wts inserted")
+    console.log("auto gambling V50_beta_wts inserted")
 }
 
 const dataCheck = () => {
