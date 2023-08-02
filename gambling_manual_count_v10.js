@@ -1806,21 +1806,23 @@ const handCheck = async (dealerCard, myCards, callbackOnResolve, isSecondHand) =
     const trueCount = 2.1;
     
     const roundedTrueCount = Math.floor(trueCount);
-    
-    for(let i = parseInt(trueCountList[0]); i <= roundedTrueCount; i++ ){
-        Object.keys(adjustedCombination[i].hasAceCombination).forEach((playerHand) => {
-         
-            Object.keys(adjustedCombination[i].hasAceCombination[playerHand]).forEach((dealerHand) => {
-                stackedAdjustedCombination.hasAceCombination[playerHand][dealerHand] = adjustedCombination[i].hasAceCombination[playerHand][dealerHand]
+    if(trueCount >= 1){
+        for(let i = parseInt(trueCountList[0]); i <= roundedTrueCount; i++ ){
+            Object.keys(adjustedCombination[i].hasAceCombination).forEach((playerHand) => {
+             
+                Object.keys(adjustedCombination[i].hasAceCombination[playerHand]).forEach((dealerHand) => {
+                    stackedAdjustedCombination.hasAceCombination[playerHand][dealerHand] = adjustedCombination[i].hasAceCombination[playerHand][dealerHand]
+                })
             })
-        })
-    
-        Object.keys(adjustedCombination[i].normalCombination).forEach((playerHand) => {
-            Object.keys(adjustedCombination[i].normalCombination[playerHand]).forEach((dealerHand) => {
-                stackedAdjustedCombination.normalCombination[playerHand][dealerHand] = adjustedCombination[i].normalCombination[playerHand][dealerHand]
+        
+            Object.keys(adjustedCombination[i].normalCombination).forEach((playerHand) => {
+                Object.keys(adjustedCombination[i].normalCombination[playerHand]).forEach((dealerHand) => {
+                    stackedAdjustedCombination.normalCombination[playerHand][dealerHand] = adjustedCombination[i].normalCombination[playerHand][dealerHand]
+                })
             })
-        })
+        }
     }
+
 
     
 
