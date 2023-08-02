@@ -252,7 +252,7 @@ const visionAi = async () => {
         animationFrameTimers.push(
             setTimeout(() => {
                 callback()
-            },10)
+            },50)
         )
       
     }
