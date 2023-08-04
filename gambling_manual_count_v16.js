@@ -1822,7 +1822,7 @@ const handCheck = async (dealerCard, myCards, callbackOnResolve, isSecondHand) =
 
     const trueCountList = Object.keys(adjustedCombination);
 
-    console.log("rounded true count:", roundedTrueCount);
+   
     if(trueCount >= 1){
         for(let i = parseInt(trueCountList[0]); i <= roundedTrueCount; i++ ){
             Object.keys(adjustedCombination[i].hasAceCombination).forEach((playerHand) => {
@@ -1835,11 +1835,12 @@ const handCheck = async (dealerCard, myCards, callbackOnResolve, isSecondHand) =
             Object.keys(adjustedCombination[i].normalCombination).forEach((playerHand) => {
                 Object.keys(adjustedCombination[i].normalCombination[playerHand]).forEach((dealerHand) => {
                     stackedAdjustedCombination.normalCombination[playerHand][dealerHand] = adjustedCombination[i].normalCombination[playerHand][dealerHand]
+                    console.log(`Adjusting: player(${playerHand}) dealer(${dealerHand}) result(${stackedAdjustedCombination.normalCombination[playerHand][dealerHand]})` );
                 })
             })
         }
     }
-
+    
 
     
 
