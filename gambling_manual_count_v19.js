@@ -2308,7 +2308,7 @@ const inertButton = () => {
     const body = document.querySelector("body");
     body.appendChild(buttonsContainer);
 
-    console.log("auto gambling manual_card_count_v18 inserted")
+    console.log("auto gambling manual_card_count_v19 inserted")
 }
 
 (async function() {
