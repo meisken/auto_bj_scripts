@@ -205,10 +205,10 @@ let currentBetTimes = 0;
 let maxBetTimes = 20;
 
 const buttonType = {
-    hit: "div[data-role='hit'] > div.iconContainer--004ac > div.icon--eb080 > div.buttonContainer--bd9a6",
-    stand: "div[data-role='stand'] > div.iconContainer--004ac > div.icon--eb080 > div.buttonContainer--bd9a6",
-    double: "div[data-role='double'] > div.iconContainer--004ac > div.icon--eb080 > div.buttonContainer--bd9a6",
-    split: "div[data-role='split'] > div.iconContainer--004ac > div.icon--eb080 > div.buttonContainer--bd9a6",
+    hit: "div[data-role='hit'] > div.iconContainer--004ac > div.icon--eb080 > .buttonContainer--bd9a6",
+    stand: "div[data-role='stand'] > div.iconContainer--004ac > div.icon--eb080 > .buttonContainer--bd9a6",
+    double: "div[data-role='double'] > div.iconContainer--004ac > div.icon--eb080 .buttonContainer--bd9a6",
+    split: "div[data-role='split'] > div.iconContainer--004ac > div.icon--eb080 > .buttonContainer--bd9a6",
     bet: "div[data-state='enabled'].container--e0aac.container--dac87.enabled--b1cef.enabled--00dd8 div.gradientBorder--dfa99",
     no: "div[data-role='no-position'] > div[data-role='no'] > div > div > div"
 }
