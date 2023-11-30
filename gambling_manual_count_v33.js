@@ -1,4 +1,3 @@
-let visionModel;
 
 const sendRequest = async (route,msg) => {
     console.log("sending req");
@@ -16,10 +15,17 @@ const sendRequest = async (route,msg) => {
  
    console.log(content);
 }
+
 const getBalance = () => {
-    const balance = document.querySelector("span[data-role='balance-label-value']" ).textContent;
- 
-    return parseInt(balance.replace(",",""));
+    const balance = document.querySelector("span[data-role='balance-label-value']" )?.textContent;
+    if(balance){
+        const normalize = balance.split(".")[0].split("").filter((char, i) => Number.isInteger(parseInt(char)))
+        return parseInt(normalize.join(""));
+
+    }else{
+        console.error("balance check error")
+        return 0
+    }
 }
 
 const sendBalance = () => {
@@ -232,248 +238,6 @@ const resetCardCount = () => {
 
 let visionTemp = []
 const animationFrameTimers = [];
-
-const yoloVision = () => {
-        
-    const labels = [
-        "RED"
-    ]
-
-    const Threshold = 0.85;
-
-    class Colors {
-
-        constructor() {
-            this.palette = [
-                "#FF3838",
-                "#FF9D97",
-                "#FF701F",
-                "#FFB21D",
-                "#CFD231",
-                "#48F90A",
-                "#92CC17",
-                "#3DDB86",
-                "#1A9334",
-                "#00D4BB",
-                "#2C99A8",
-                "#00C2FF",
-                "#344593",
-                "#6473FF",
-                "#0018EC",
-                "#8438FF",
-                "#520085",
-                "#CB38FF",
-                "#FF95C8",
-                "#FF37C7",
-            ];
-            this.n = this.palette.length;
-        }
-    
-        get = (i) => this.palette[Math.floor(i) % this.n];
-    
-        static hexToRgba = (hex, alpha) => {
-            var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-            return result
-                ? `rgba(${[parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16)].join(
-                    ", "
-                )}, ${alpha})`
-                : null;
-        };
-    }
-
-    const renderBoxes = (canvasRef, boxes_data, scores_data, classes_data, ratios) => {
-
-
-        const ctx = canvasRef.getContext("2d");
-        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); // clean canvas
-    
-        const colors = new Colors();
-    
-        // font configs
-        const font = `${Math.max(
-            Math.round(Math.max(ctx.canvas.width, ctx.canvas.height) / 40),
-            14
-        )}px Arial`;
-        ctx.font = font;
-        ctx.textBaseline = "top";
-    
-        for (let i = 0; i < scores_data.length; ++i) {
-            // filter based on class threshold
-            const klass = labels[classes_data[i]];
-            const color = colors.get(classes_data[i]);
-            const score = (scores_data[i] * 100).toFixed(1) ;
-        
-
-            if(parseInt(score) > Threshold * 100){
-                let [y1, x1, y2, x2] = boxes_data.slice(i * 4, (i + 1) * 4);
-                x1 *= ratios[0];
-                x2 *= ratios[0];
-                y1 *= ratios[1];
-                y2 *= ratios[1];
-                const width = x2 - x1;
-                const height = y2 - y1;
-            
-            
-                // draw box.
-                ctx.fillStyle = Colors.hexToRgba(color, 0.2);
-                ctx.fillRect(x1, y1, width, height);
-            
-                // draw border box.
-                ctx.strokeStyle = color;
-                ctx.lineWidth = Math.max(Math.min(ctx.canvas.width, ctx.canvas.height) / 200, 2.5);
-                ctx.strokeRect(x1, y1, width, height);
-            
-                // Draw the label background.
-                ctx.fillStyle = color;
-                const textWidth = ctx.measureText(klass + " - " + score + "%").width;
-                const textHeight = parseInt(font, 10); // base 10
-                const yText = y1 - (textHeight + ctx.lineWidth);
-                ctx.fillRect(
-                    x1 - 1,
-                    yText < 0 ? 0 : yText, // handle overflow label box
-                    textWidth + ctx.lineWidth,
-                    textHeight + ctx.lineWidth
-                );
-            
-                // Draw labels
-                ctx.fillStyle = "#ffffff";
-                ctx.fillText(klass + " - " + score + "%", x1 - 1, yText < 0 ? 0 : yText);
-            }
-
-        }
-    };
-
-    const preprocess = (source, modelWidth, modelHeight) => {
-        let xRatio, yRatio; // ratios for boxes
-    
-        const input = tf.tidy(() => {
-            const img = tf.browser.fromPixels(source);
-        
-            // padding image to square => [n, m] to [n, n], n > m
-            const [h, w] = img.shape.slice(0, 2); // get source width and height
-            const maxSize = Math.max(w, h); // get max size
-            const imgPadded = img.pad([
-                [0, maxSize - h], // padding y [bottom only]
-                [0, maxSize - w], // padding x [right only]
-                [0, 0],
-            ]);
-        
-            xRatio = maxSize / w; // update xRatio
-            yRatio = maxSize / h; // update yRatio
-        
-            return tf.image
-                .resizeBilinear(imgPadded, [modelWidth, modelHeight]) // resize frame
-                .div(255.0) // normalize
-                .expandDims(0); // add batch
-        });
-    
-        return [input, xRatio, yRatio];
-    };
-
-    const detect = async (model, video, canvas) => {
-
-
-        if(video && canvas){
-        
-        
-            const  model_dim = [model.inputs[0].shape[1], model.inputs[0].shape[2]];
-        
-            // Set canvas height and width
-        
-            canvas.width = model_dim[0];
-            canvas.height = model_dim[1];
-            //console.log(width,height)
-
-            // 4. TODO - Make Detections
-            // const img = tf.browser.fromPixels(video)
-            // const resized = tf.image.resizeBilinear(img,  model_dim).maximum(tf.scalar(0)).minimum(tf.scalar(1))
-            // const casted = resized.cast('float32')
-            // const expanded = casted.expandDims(0)
-
-        
-            const [modelWidth, modelHeight] = model_dim; // get model width and height
-
-            tf.engine().startScope(); // start scoping tf engine
-            const [input, xRatio, yRatio] = preprocess(video, modelWidth, modelHeight); // preprocess image
-        
-            const res = model.execute(input); // inference model
-            const transRes = res.transpose([0, 2, 1]); // transpose result [b, det, n] => [b, n, det]
-            
-            const boxes = tf.tidy(() => {
-                const w = transRes.slice([0, 0, 2], [-1, -1, 1]); // get width
-                const h = transRes.slice([0, 0, 3], [-1, -1, 1]); // get height
-                const x1 = tf.sub(transRes.slice([0, 0, 0], [-1, -1, 1]), tf.div(w, 2)); // x1
-                const y1 = tf.sub(transRes.slice([0, 0, 1], [-1, -1, 1]), tf.div(h, 2)); // y1
-                return tf
-                    .concat(
-                        [
-                            y1,
-                            x1,
-                            tf.add(y1, h), //y2
-                            tf.add(x1, w), //x2
-                        ],
-                        2
-                    )
-                    .squeeze();
-            }); // process boxes [y1, x1, y2, x2]
-        
-            const [scores, classes] = tf.tidy(() => {
-                // class scores
-                const rawScores = transRes.slice([0, 0, 4], [-1, -1, labels.length]).squeeze(0); // #6 only squeeze axis 0 to handle only 1 class models
-                return [rawScores.max(1), rawScores.argMax(1)];
-            }); // get max scores and classes index
-        
-            const nms = await tf.image.nonMaxSuppressionAsync(boxes, scores, 500, 0.45, 0.2); // NMS to filter boxes
-        
-            const boxes_data = boxes.gather(nms, 0).dataSync(); // indexing boxes by nms index
-            const scores_data = scores.gather(nms, 0).dataSync(); // indexing scores by nms index
-            const classes_data = classes.gather(nms, 0).dataSync(); // indexing classes by nms index
-
-            renderBoxes(canvas, boxes_data, scores_data, classes_data, [xRatio, yRatio]); // render boxes
-
-            // requestAnimationFrame(() => {
-            //     detect(model, video, canvas)
-            // })
-
-            // setTimeout(() => {
-            //     detect(model, video, canvas)
-            // }, 20)
-
-            tf.dispose([res, transRes, boxes, scores, classes, nms]); // clear memory
-        
-            //callback();
-            tf.engine().endScope(); // end of scoping
-
-        
-        }
-    
-
-    }
-
-
-    return detect
-
-}
-
-
-const createCanvas = () => {
-    const videoWrapper = document.querySelector("#video-wrapper > div > div > div > div > div");
-    const canvas = document.createElement("canvas");
-
-    canvas.id = "vision-canvas"
-
-    canvas.style.position = "absolute";
-    canvas.style.inset = 0;
-    canvas.style.width = "100%"
-    canvas.style.height = "100%"
-    canvas.style.zIndex = 8;
-    canvas.style.pointerEvents = "none"
-
-    videoWrapper.appendChild(canvas)
-    return canvas
-}
-
-
 const visionAi = async () => {
     console.log("running ai");
 
@@ -596,9 +360,7 @@ const visionAi = async () => {
             count : 0
         }
     }
-    const canvas = createCanvas()
-    const runVision = yoloVision();
-
+    
     const detectFrame = async function() {
         const firstHand = document.querySelectorAll("div[data-role='firstHand-cards'] > div[data-role='virtual-card'] > div > div > div > span")
         const secondHand = document.querySelectorAll("div[data-role='secondHand-cards'] > div[data-role='virtual-card'] > div > div > div > span");
@@ -651,7 +413,7 @@ const visionAi = async () => {
             storeVisionCardCounting();
         }
 
-        runVision(visionModel,video, canvas)
+        
         console.log(getCurrentTrueCount(),visionTemp)
         optimizedAnimationFrame(detectFrame);
     
@@ -662,6 +424,31 @@ const visionAi = async () => {
 
 
 const totalDecks = 8;
+const fetchTrueCount = async () => {
+    return new Promise(async (resolve, reject) => {
+        try{
+            const res = await fetch('https://counterevo.meisken.dev/api/card_count',{
+                method: "GET", 
+                headers: {
+                    "Content-Type": "application/json",
+                }
+            });
+            const data = await res.json();
+          
+            cardCount.multiplication = data.multiplication
+            cardCount.playedCard = data.playedCard
+
+            const trueCount = data.multiplication / ( ( totalDecks * 52 - data.playedCard ) / 52 )
+            console.log(`fetch true count: ${trueCount}`,cardCount)
+            resolve(trueCount)
+         
+        }catch(err){
+            reject(err)
+        }
+    })
+
+
+}
 const getCurrentTrueCount = () => {
     let current = {
         playedCard: 0,
@@ -2041,7 +1828,7 @@ function cloneDeep(oldObj) {
 const handCheck = async (dealerCard, myCards, callbackOnResolve, isSecondHand) => {
  
 
-
+    const trueCount = await fetchTrueCount()
     
     const dealerNumber = getCardNumber(dealerCard);
     const firstCard = getCardNumber(myCards[0]);
@@ -2049,7 +1836,7 @@ const handCheck = async (dealerCard, myCards, callbackOnResolve, isSecondHand) =
     //buttonContainer--f47c3 no safe button 
     console.log(`dealer cards is: ${dealerNumber}`);
 
-    const trueCount = getCurrentTrueCount().trueCount;
+    //const trueCount = getCurrentTrueCount().trueCount;
     
     const roundedTrueCount = Math.floor(trueCount);
 
@@ -2243,7 +2030,8 @@ const betMoney = async () => {
         const [betButton] = await getElements(0,buttonType.bet);
         let bettedTimes = 1;
         let adjustedFrequency = frequency;
-        const trueCount = getCurrentTrueCount().trueCount;
+        const trueCount = await fetchTrueCount()
+        //const trueCount = getCurrentTrueCount().trueCount;
         
         const matchedTrueCount = Object.keys(config).sort(
             (prev,next) => {
@@ -2308,27 +2096,27 @@ const firstRun = () => {
   
     }
     //cardCount.multiplication
-    const playedCardInput = window.prompt("input you last playedCard number (default 0) / 輸入上次playedCard的數字");
-    if(parseInt(playedCardInput) === NaN || parseInt(playedCardInput) === undefined ){
-        console.log(`%cYour playedCard number is invalid`, "color: red; font-size: 24px; font-weight: 700;");
+    // const playedCardInput = window.prompt("input you last playedCard number (default 0) / 輸入上次playedCard的數字");
+    // if(parseInt(playedCardInput) === NaN || parseInt(playedCardInput) === undefined ){
+    //     console.log(`%cYour playedCard number is invalid`, "color: red; font-size: 24px; font-weight: 700;");
 
-        return false
-    }else{
-        if(playedCardInput != "" && parseInt(playedCardInput) != 0){
-            cardCount.playedCard = parseInt(playedCardInput) 
-        } 
-    }
+    //     return false
+    // }else{
+    //     if(playedCardInput != "" && parseInt(playedCardInput) != 0){
+    //         cardCount.playedCard = parseInt(playedCardInput) 
+    //     } 
+    // }
 
-    const multiplicationInput = window.prompt("input you last multiplication number (default 0) / 輸入上次multiplication的數字");
-    if(parseInt(multiplicationInput) === NaN || parseInt(multiplicationInput) === undefined){
-        console.log(`%cYour multiplication number is invalid`, "color: red; font-size: 24px; font-weight: 700;");
+    // const multiplicationInput = window.prompt("input you last multiplication number (default 0) / 輸入上次multiplication的數字");
+    // if(parseInt(multiplicationInput) === NaN || parseInt(multiplicationInput) === undefined){
+    //     console.log(`%cYour multiplication number is invalid`, "color: red; font-size: 24px; font-weight: 700;");
 
-        return false
-    }else{
-        if(multiplicationInput != "" && parseInt(multiplicationInput) != 0){
-            cardCount.multiplication = parseInt(multiplicationInput) 
-        } 
-    }
+    //     return false
+    // }else{
+    //     if(multiplicationInput != "" && parseInt(multiplicationInput) != 0){
+    //         cardCount.multiplication = parseInt(multiplicationInput) 
+    //     } 
+    // }
 
     const selectedChipValue = Number(document.querySelector("div[data-role='selected-chip'] > div[data-role='chip']").getAttribute("data-value"));
     //document.querySelector("div[data-role='selected-chip']  div[data-role='chip']").getAttribute("data-value")
@@ -2372,7 +2160,7 @@ const startBetting = async () => {
     }
 
     noButtonCLicked = false;
-
+  
     await betMoney();
     if(enableWhatsappFunction){
         refreshStoppedCheckTimer();
@@ -2402,7 +2190,7 @@ const runBtnOnClick = () => {
             startDisconnectionCheck(); 
         }
         togglePlusTableButton(false);
-        visionAi();
+        //visionAi();
         //cardCounting();
         startBetting();
     }
@@ -2584,65 +2372,11 @@ const inertButton = () => {
     const body = document.querySelector("body");
     body.appendChild(buttonsContainer);
 
-    console.log("auto gambling manual_card_count_v33_test inserted")
-}
-
-
-const loadVisionModel = () => {
-
-    const waitTensorflowjsLoad = () => {
-        return new Promise((resolve,reject) => {
-            const timer = setInterval(() => {
-                if(tf === undefined){
-                    console.log("tensorflow is undefined")
-                }
-                
-                if(tf?.loadGraphModel) {     
-                    resolve();
-                    clearInterval(timer);
-                }
-            },250)
-        });
-    }
-
-    return new Promise(async (resolve, reject) => {
-        try{
-            await waitTensorflowjsLoad()
-        
-            const remoteModelUrl = "https://cdn.statically.io/gh/meisken/cdn_script/main/vision_model/RED_CARD_V1/model.json"
-            const model = await tf.loadGraphModel(remoteModelUrl, {
-                onProgress: (fractions) => {
-                    console.log(fractions)
-                }
-            });
-            const dummyInput = tf.ones(model.inputs[0].shape);
-            const warmupResult = await model.executeAsync(dummyInput);
-            tf.dispose(warmupResult)
-            tf.dispose(dummyInput)
-            visionModel = model;
-            resolve()
-        }catch(err){
-            console.log(err)
-            reject(err)
-        }
-    })
+    console.log("auto gambling manual_card_count_v33 inserted")
 }
 
 (async function() {
 
 
-
-
-    try{
-        
-        await loadVisionModel()
-        
-    }
-    catch(err){
-        console.log(err)
-    }finally{
-        inertButton()
-    }
-
-
+    inertButton()
 })();
