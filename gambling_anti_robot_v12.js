@@ -314,7 +314,7 @@ const yoloVision = () => {
         console.log("a red card is found")
 
        
-        if( cardCount.playedCard > 100){
+        if( cardCount.playedCard > 150){
             console.log("card count reset")
             resetCardCount()
         }
