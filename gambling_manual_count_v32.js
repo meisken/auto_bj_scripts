@@ -2096,27 +2096,27 @@ const firstRun = () => {
   
     }
     //cardCount.multiplication
-    const playedCardInput = window.prompt("input you last playedCard number (default 0) / 輸入上次playedCard的數字");
-    if(parseInt(playedCardInput) === NaN || parseInt(playedCardInput) === undefined ){
-        console.log(`%cYour playedCard number is invalid`, "color: red; font-size: 24px; font-weight: 700;");
+    // const playedCardInput = window.prompt("input you last playedCard number (default 0) / 輸入上次playedCard的數字");
+    // if(parseInt(playedCardInput) === NaN || parseInt(playedCardInput) === undefined ){
+    //     console.log(`%cYour playedCard number is invalid`, "color: red; font-size: 24px; font-weight: 700;");
 
-        return false
-    }else{
-        if(playedCardInput != "" && parseInt(playedCardInput) != 0){
-            cardCount.playedCard = parseInt(playedCardInput) 
-        } 
-    }
+    //     return false
+    // }else{
+    //     if(playedCardInput != "" && parseInt(playedCardInput) != 0){
+    //         cardCount.playedCard = parseInt(playedCardInput) 
+    //     } 
+    // }
 
-    const multiplicationInput = window.prompt("input you last multiplication number (default 0) / 輸入上次multiplication的數字");
-    if(parseInt(multiplicationInput) === NaN || parseInt(multiplicationInput) === undefined){
-        console.log(`%cYour multiplication number is invalid`, "color: red; font-size: 24px; font-weight: 700;");
+    // const multiplicationInput = window.prompt("input you last multiplication number (default 0) / 輸入上次multiplication的數字");
+    // if(parseInt(multiplicationInput) === NaN || parseInt(multiplicationInput) === undefined){
+    //     console.log(`%cYour multiplication number is invalid`, "color: red; font-size: 24px; font-weight: 700;");
 
-        return false
-    }else{
-        if(multiplicationInput != "" && parseInt(multiplicationInput) != 0){
-            cardCount.multiplication = parseInt(multiplicationInput) 
-        } 
-    }
+    //     return false
+    // }else{
+    //     if(multiplicationInput != "" && parseInt(multiplicationInput) != 0){
+    //         cardCount.multiplication = parseInt(multiplicationInput) 
+    //     } 
+    // }
 
     const selectedChipValue = Number(document.querySelector("div[data-role='selected-chip'] > div[data-role='chip']").getAttribute("data-value"));
     //document.querySelector("div[data-role='selected-chip']  div[data-role='chip']").getAttribute("data-value")
