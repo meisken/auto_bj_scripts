@@ -311,12 +311,13 @@ const yoloVision = () => {
     }
     let redCardTimer, detectedTimes = 0; 
     const handleRedDetected = () => {
-      
+        console.log("a red card is found")
         detectedTimes++
         clearTimeout(redCardTimer);
         redCardTimer = setTimeout(() => {
        
             if(detectedTimes < 8){
+                console.log("card count reset")
                 resetCardCount()
             }
             detectedTimes = 0;
