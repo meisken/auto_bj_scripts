@@ -254,11 +254,9 @@ const cardCount = {
 let currentHands = [];
 
 let isRedCardDetected = false;
-
 const resetCardCount = () => {
     cardCount.playedCard = 0;
     cardCount.multiplication = 0;
-    console.log("card count reset")
     //currentHands = [];
 }
 
@@ -312,29 +310,21 @@ const yoloVision = () => {
                 : null;
         };
     }
-    
-    let redAppearTimer;
-    const handleRedDetected =  () => {
+   
+    const handleRedDetected = () => {
         console.log("a red card is found")
 
+       
         if( cardCount.playedCard > 150){
-            clearInterval(redAppearTimer);
-            redAppearTimer = setInterval(() => {
-                if(currentHands.length = 0){
-                    resetCardCount()
-                    clearInterval(redAppearTimer);
-                }
-            }, 250)
-    
-
-         
+            console.log("card count reset")
+            resetCardCount()
         }
     
      
            
      
 
-  
+    
         // const dealerCard = document.querySelectorAll("div[data-role='dealer-virtual-cards'] > div > div > span")
         // if(dealerCard.length === 0){
             
@@ -368,7 +358,7 @@ const yoloVision = () => {
 
             if(parseInt(score) > Threshold * 100){
                
-                handleRedDetected()
+                //triggeredCallback && triggeredCallback()
 
                 let [y1, x1, y2, x2] = boxes_data.slice(i * 4, (i + 1) * 4);
                 x1 *= ratios[0];
@@ -500,7 +490,7 @@ const yoloVision = () => {
                 scores_data, 
                 classes_data, 
                 [xRatio, yRatio], 
-                
+                //handleRedDetected
             ); // render boxes
 
             // requestAnimationFrame(() => {
@@ -674,76 +664,47 @@ const visionAi = async () => {
     const canvas = createCanvas()
     const runVision = yoloVision();
 
-    const nativeCardCounting = (onCardFounded) => {
-
-        const fetchHands = [];
-
+    const detectFrame = async function() {
+        const firstHand = document.querySelectorAll("div[data-role='firstHand-cards'] > div[data-role='virtual-card'] > div > div > div > span")
+        const secondHand = document.querySelectorAll("div[data-role='secondHand-cards'] > div[data-role='virtual-card'] > div > div > div > span");
+        const dealerCard = document.querySelectorAll("div[data-role='dealer-virtual-cards'] > div > div > span");
         
-        [firstHand,secondHand,dealerCard].forEach((hands) => {
-            hands.forEach((hand) => {
-                fetchHands.push(getCardNumber(hand))
-            });
-        
-        })
-        if(fetchHands.length !== 0){
-            if(fetchHands.length > currentHands.length && dealerCard.length === 1){
-
-                console.log("new card found", fetchHands);
-                console.log(getCurrentTrueCount());
-                console.log(cardCount)
-
-                onCardFounded && onCardFounded()
-            }
-            currentHands = [...fetchHands]
-        }
-        
-    
-        
-    }
-
+        const nativeCardCounting = (onCardFounded) => {
   
-    
-    const newPlayerCardCallback = () => {
-        nativeCardCounting(() => {
+            const fetchHands = [];
+ 
           
-         
-            visionTemp = [];
-            console.log("refreshed visionTemp ")
-            const { playedCard, multiplication } = getCurrentTrueCount();
-            fetch('https://counterevo.meisken.dev/api/card_count',{
-                method: "POST", 
-                body: JSON.stringify({
-                  
-                    "playedCard": playedCard,
-                    "multiplication": multiplication
-                }),
-                headers: {
-                    "Content-Type": "application/json",
-                
-                }
+            [firstHand,secondHand,dealerCard].forEach((hands) => {
+                hands.forEach((hand) => {
+                    fetchHands.push(getCardNumber(hand))
+                });
+            
             })
-            console.log("request sent")
-        });
-    }
-    const [firstHandContainer, secondHandContainer, dealerHandContainer] = await Promise.all([
-        getElements(0,"div[data-role='firstHand-cards']"),
-        getElements(0,"div[data-role='secondHand-cards']"),
-
-        getElements(0,"div[data-role='dealer-virtual-cards']"),
-    ])
-    // const firstHand = document.querySelectorAll("div[data-role='firstHand-cards'] > div[data-role='virtual-card'] > div > div > div > span")
-    // const secondHand = document.querySelectorAll("div[data-role='secondHand-cards'] > div[data-role='virtual-card'] > div > div > div > span");
-    // const dealerCard = document.querySelectorAll("div[data-role='dealer-virtual-cards'] > div > div > span");
-
-    const mutationObserveConfig = { childList: true, subtree: true };
-
-
-    const firstHandObserver = new MutationObserver(newPlayerCardCallback);
-    const secondHandObserver = new MutationObserver(newPlayerCardCallback);
-    const dealerObserver = new MutationObserver(() => {
+            if(fetchHands.length !== 0){
+                if(fetchHands.length > currentHands.length && dealerCard.length === 1){
+                    console.log("new player card found", fetchHands.length - currentHands.length);
+                    onCardFounded && onCardFounded()
+                }
+                currentHands = structuredClone(fetchHands)
+            }
+            
+            //console.log(getCurrentTrueCount(),visionTemp)
         
-        newPlayerCardCallback()
+           
+        }
+        const refreshCardCounts = () => {
+            Object.keys(cardClasses).forEach((card) => {
+                cardClasses[card].count = 0;
+            })
+        }
+        nativeCardCounting(() => {
+            emptyAccumulator = 0;
+            refreshCardCounts();
+            visionTemp = [];
+            console.log("refreshed", emptyAccumulator)
+        });
 
+ 
         const getDealerCardPoint = () => {
             const scoreElement = document.querySelector("div.dealerScore--f29f0 > div > div[data-role='score']");
             const score = parseInt(scoreElement.textContent)
@@ -751,46 +712,38 @@ const visionAi = async () => {
         }
         const dealerPoint = getDealerCardPoint();
 
-
         if(dealerPoint >= 17){
-            console.log("stored")
-            storeCardCountingHistory();
             storeVisionCardCounting();
-            console.log("stored history")
         }
-    });
-
-    firstHandObserver.observe(firstHandContainer[0] , mutationObserveConfig);
-    secondHandObserver.observe(secondHandContainer[0] , mutationObserveConfig);
-    dealerObserver.observe(dealerHandContainer[0] , mutationObserveConfig);
-   
-
-    const detectFrame = async function() {
-     
-      
- 
-        const refreshCardCounts = () => {
-            Object.keys(cardClasses).forEach((card) => {
-                cardClasses[card].count = 0;
-            })
-        }
-  
-
- 
-  
-
 
         runVision(visionModel,video, canvas)
+        const trueCount = getCurrentTrueCount();
+
+      
 
 
+        if(
+            trueCount.multiplication !== previousTrueCount.multiplication && 
+            trueCount.playedCard !== previousTrueCount.playedCard
+        ){
+            fetch('https://counterevo.meisken.dev/api/card_count',{
+                method: "POST", 
+                body: JSON.stringify({
+                    "playedCard": trueCount.playedCard,
+                    "multiplication": trueCount.multiplication
+                }),
+                headers: {
+                    "Content-Type": "application/json",
+                
+                }
+            })
+        }
 
-
-
-        if(getCurrentTrueCount().playedCard > 215 ){
+        if(trueCount.playedCard > 215 ){
             resetCardCount()
         }
    
-        //console.log(getCurrentTrueCount(),visionTemp)
+        console.log(trueCount,visionTemp)
         optimizedAnimationFrame(detectFrame);
     
     };
@@ -821,7 +774,7 @@ const getCurrentTrueCount = () => {
     const trueCount = current.multiplication / ( ( totalDecks * 52 - current.playedCard ) / 52 )
     return {
         ...current,
-        trueCount: trueCount
+        trueCount
     }
     
 }
@@ -2029,22 +1982,25 @@ const setFreezeTimer = () => {
 
 const betMoney = async () => {
     //data-state="enabled"
+    return new Promise(async (resolve,reject) => {
+        //const betButton = await getElements(0,"div.border--c5bcb.spinningBorderVisible--84727.borderSpinning--ea474 > div");
+        
+        const [betButton] = await getElements(0,buttonType.bet);
+        let bettedTimes = 1;
+        
+        const trueCount = getCurrentTrueCount().trueCount;
+        
+        if((betButton && trueCount >= 1.5) || freezeIndicator){
 
-    const [betButton] = await getElements(0,buttonType.bet);
-    let bettedTimes = 1;
-    
-    const trueCount = getCurrentTrueCount().trueCount;
-    
-    if((betButton && trueCount >= 1.5) || freezeIndicator){
+            betButton.click();
+            setFreezeTimer()
+            freezeIndicator = false
+            console.log("bet");
+          
 
-        betButton.click();
-        setFreezeTimer()
-        freezeIndicator = false
-        console.log("bet");
-      
-
-    }
-    
+        }
+        resolve()
+    })
 }
 
 const isValidNumber = (arg) => (arg !== undefined && arg !== NaN && arg !== null && arg > 0);
@@ -2137,7 +2093,7 @@ const startBetting = async () => {
     noButtonCLicked = false;
 
  
-    betMoney();
+    await betMoney();
     storeCardCountingHistory();
     // if(enableWhatsappFunction){
     //     refreshStoppedCheckTimer();
@@ -2170,7 +2126,7 @@ const runBtnOnClick = async () => {
         togglePlusTableButton(false);
         visionAi();
         //cardCounting();
-        setFreezeTimer()
+        //setFreezeTimer()
         startBetting();
     //}
 }
@@ -2352,7 +2308,7 @@ const inertButton = () => {
     const body = document.querySelector("body");
     body.appendChild(buttonsContainer);
 
-    console.log("auto gambling anti_robot_v23_test inserted")
+    console.log("auto gambling anti_robot_v24_test inserted")
 }
 
 
