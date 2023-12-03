@@ -2185,13 +2185,13 @@ const inertButton = () => {
     buttonsContainer.appendChild(stopButton);
     //buttonsContainer.appendChild(fetchButton);
     //buttonsContainer.appendChild(alarmButton);
-    buttonsContainer.appendChild(undoButton);
-    buttonsContainer.appendChild(resetCounterButton);
+    // buttonsContainer.appendChild(undoButton);
+    // buttonsContainer.appendChild(resetCounterButton);
 
     const body = document.querySelector("body");
     body.appendChild(buttonsContainer);
 
-    console.log("auto gambling manual_card_count_v35_test inserted")
+    console.log("auto gambling manual_card_count_v36_test inserted")
 }
 
 (async function() {
