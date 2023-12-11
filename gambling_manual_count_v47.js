@@ -1829,7 +1829,7 @@ const setFreezeTimer = () => {
     freezeTimer = setTimeout(() => {
         freezeIndicator = true
         console.log("bet for preventing freeze")
-    },1380000)
+    },660000)
 }
 
 const betMoney = async () => {
@@ -2175,7 +2175,7 @@ const inertButton = () => {
     const body = document.querySelector("body");
     body.appendChild(buttonsContainer);
 
-    console.log("auto gambling manual_card_count_v48_test inserted")
+    console.log("auto gambling manual_card_count_v47 inserted")
 }
 
 (async function() {
