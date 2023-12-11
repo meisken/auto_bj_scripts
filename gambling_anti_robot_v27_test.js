@@ -2158,7 +2158,7 @@ const stopBtnOnClick = () => {
         clearTimeout(t)
     })
     currentBetTimes = 0;
-    maxBetTimes = 20;
+    maxBetTimes = Infinity;
 }
 
 
