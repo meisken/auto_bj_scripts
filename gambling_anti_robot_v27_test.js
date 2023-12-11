@@ -2162,80 +2162,6 @@ const stopBtnOnClick = () => {
 }
 
 
-const fetchData = async () => {
-    console.log("sending req"); 
-    //20230306
-    const specifiedDay = window.prompt("which day you want to fetch");
-    const baseUrl = "https://evo88.nomisma88.com"
-    const providerVersion = "gameProvider=evolution&client_version=6.20230307.182619.22477-fb0d9deba7";
-    if(specifiedDay.length !== 8){ 
- 
-        console.log("input error")
-        return 
-    }
-    const fetchADay = (date) => {
-        return fetch(`${baseUrl}/api/player/history/day/${date}?${providerVersion}`);
-    }
-
-    const fetchAGame = (id) => {
-        return fetch(`${baseUrl}/api/player/history/game/${id}?${providerVersion}`);;
-    }
-    const rawData = await fetchADay(specifiedDay); 
-    const dataObject = await rawData.json();
-    console.log(dataObject.length, specifiedDay);
-
-    const postData = async (data,route) => {
-        return new Promise(async (resolve,reject) => {
-            try{
-                const rawResponse = await fetch(`http://localhost:3000/${route}`, {
-                    method: 'POST',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': "*",
-                        'Access-Control-Allow-Methods': "GET,POST,PUT,PATCH,DELETE",
-                    },
-                    body: JSON.stringify(data)
-                });
-                const res = await rawResponse.json();
-                resolve(res);
-            }catch(err){
-                console.log(err);
-                reject(err)
-            }
-        
-        });
- 
-    }
-
-    let i = 0;
-    const timer = setInterval(async () => {
-        if(i < dataObject.length){
-            const rawGame = await fetchAGame(dataObject[i].id);
-            const game = await rawGame.json();
-            const dealerHand = game.result.dealerHand;
-            const playerHand = game.participants[0].hands;
-
-            const status = await postData(
-                {
-                    id: dataObject[i].id,
-                    dealerHand,
-                    playerHand
-                }, 
-                specifiedDay
-            );
-
-            console.log(i,status)
-        }else{
-            clearInterval(timer);
-        }
-
-
-        i++;
-    },1500)
-
-
-}
 let rolloverAlarms = [];
 const startRolloverAlarm = () => {
     if(enableWhatsappFunction){
@@ -2286,20 +2212,6 @@ const inertButton = () => {
     buttonBaseStyles(stopButton);
     stopButton.addEventListener("click",stopBtnOnClick);
 
-    //fetch button
-    const fetchButton = document.createElement("button");
-    fetchButton.appendChild(document.createTextNode("fetch"));
-    fetchButton.style.backgroundColor = "lightblue"
-    buttonBaseStyles(fetchButton);
-    fetchButton.addEventListener("click",fetchData);
-
-    //rollover alarm button
-    // const alarmButton = document.createElement("button");
-    // alarmButton.appendChild(document.createTextNode("alarm"));
-    // alarmButton.style.backgroundColor = "#154c79";
-    // buttonBaseStyles(alarmButton);
-    // alarmButton.addEventListener("click",startRolloverAlarm);
-
     const undoButton = document.createElement("button");
     undoButton.appendChild(document.createTextNode("undo"));
     undoButton.style.backgroundColor = "lightblue";
@@ -2316,8 +2228,7 @@ const inertButton = () => {
     containerStyles(buttonsContainer);
     buttonsContainer.appendChild(runButton);
     buttonsContainer.appendChild(stopButton);
-    //buttonsContainer.appendChild(fetchButton);
-    //buttonsContainer.appendChild(alarmButton);
+
     buttonsContainer.appendChild(undoButton);
     buttonsContainer.appendChild(resetCounterButton);
 
