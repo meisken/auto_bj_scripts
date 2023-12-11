@@ -744,7 +744,7 @@ const visionAi = async () => {
                     "multiplication": trueCount.multiplication
                 }),
                 headers: {
-                    'Cache-Control': 'no-store, max-age=0',
+                    'Cache-Control': 'no-store, max-age=0, no-store, must-revalidate',
                     "Content-Type": "application/json",
                     "Accept-Request": "meiskena999gambling",
                     'pragma': 'no-cache',
@@ -753,7 +753,7 @@ const visionAi = async () => {
                 }
             })
         }
-        
+
         if(trueCount.playedCard > 215 ){
             resetCardCount()
         }

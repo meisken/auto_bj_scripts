@@ -228,6 +228,7 @@ let currentHands = [];
 
 
 const totalDecks = 8;
+//let lastPlayedCard = 0;
 const fetchTrueCount = async () => {
     return new Promise(async (resolve, reject) => {
 
@@ -238,7 +239,7 @@ const fetchTrueCount = async () => {
                     method: "GET", 
                     headers: {
                         "Content-Type": "application/json",
-                        'Cache-Control': 'no-store, max-age=0',
+                        'Cache-Control': 'no-store, max-age=0, no-store, must-revalidate',
                         'pragma': 'no-cache',
                         "cache": 'no-store',
                         "Accept-Request": "meiskena999gambling",
@@ -251,6 +252,8 @@ const fetchTrueCount = async () => {
     
                 const trueCount = data.multiplication / ( ( totalDecks * 52 - data.playedCard ) / 52 )
                 console.log(`fetch true count: ${trueCount}`, data)
+                //lastPlayedCard = trueCount.playedCard
+
                 resolve(trueCount)
 
             }catch(err){
@@ -2166,7 +2169,7 @@ const inertButton = () => {
     const body = document.querySelector("body");
     body.appendChild(buttonsContainer);
 
-    console.log("auto gambling manual_card_count_v45 inserted")
+    console.log("auto gambling manual_card_count_v45_1 inserted")
 }
 
 (async function() {
