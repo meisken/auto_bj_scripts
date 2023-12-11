@@ -234,7 +234,7 @@ const fetchTrueCount = async () => {
         setTimeout(async () => {
             try{
                 
-                const res = await fetch(`https://counterevo.meisken.dev/api/card_count?${Date.now()+(Math.random()*1000000).toFixed(2)}`,{
+                const res = await fetch(`https://counterevo.meisken.dev/api/card_count?${(Date.now()+Math.random()*1000000).toFixed(2)}`,{
                     method: "GET", 
                     headers: {
                         "Content-Type": "application/json",
