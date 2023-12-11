@@ -2324,7 +2324,7 @@ const inertButton = () => {
     const body = document.querySelector("body");
     body.appendChild(buttonsContainer);
 
-    console.log("auto gambling anti_robot_v26_test inserted")
+    console.log("auto gambling anti_robot_v27_test inserted")
 }
 
 
