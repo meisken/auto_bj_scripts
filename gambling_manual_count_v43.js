@@ -234,17 +234,18 @@ const fetchTrueCount = async () => {
         setTimeout(async () => {
             try{
                 
-                const res = await fetch(`https://counterevo.meisken.dev/api/card_count?${Date.now()}`,{
+                const res = await fetch(`https://counterevo.meisken.dev/api/card_count?${Date.now()+(Math.random()*1000000).toFixed(2)}`,{
                     method: "GET", 
                     headers: {
                         "Content-Type": "application/json",
                         'Cache-Control': 'no-store, max-age=0',
                         'pragma': 'no-cache',
                         "cache": 'no-store',
-                        "Accept-Request": "meiskena999gambling"
+                        "Accept-Request": "meiskena999gambling",
+                        next: { revalidate: 0 }
                     }
                 });
-                
+               
                 const data = await res.json();
    
     
