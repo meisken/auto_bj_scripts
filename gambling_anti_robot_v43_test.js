@@ -472,7 +472,7 @@ const yoloVision = () => {
             tf.engine().startScope(); // start scoping tf engine
             const [input, xRatio, yRatio] = preprocess(video, modelWidth, modelHeight); // preprocess image
         
-            const res = model.execute(input); // inference model
+            const res = model.executeAsync(input); // inference model
             const transRes = res.transpose([0, 2, 1]); // transpose result [b, det, n] => [b, n, det]
             
             const boxes = tf.tidy(() => {
@@ -2261,7 +2261,7 @@ const inertButton = () => {
     const body = document.querySelector("body");
     body.appendChild(buttonsContainer);
 
-    console.log("auto gambling anti_robot_v39_test inserted")
+    console.log("auto gambling anti_robot_v43_test inserted")
 }
 
 
@@ -2285,11 +2285,11 @@ const loadVisionModel = () => {
     return new Promise(async (resolve, reject) => {
         try{
             await waitTensorflowjsLoad()
-        
-            const remoteModelUrl = "https://cdn.statically.io/gh/meisken/cdn_script/main/vision_model/RED_CARD_V2/model.json"
+            
+            const remoteModelUrl = `https://cdn.statically.io/gh/meisken/cdn_script/main/vision_model/${aiConfig.aiVersionName}/model.json`
             const model = await tf.loadGraphModel(remoteModelUrl, {
                 onProgress: (fractions) => {
-                    console.log(fractions)
+                    console.log(fractions)  
                 }
             });
             const dummyInput = tf.ones(model.inputs[0].shape);
