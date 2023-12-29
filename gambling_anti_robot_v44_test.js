@@ -272,7 +272,7 @@ const resetCardCount = () => {
 
 let visionTemp = []
 const animationFrameTimers = [];
-
+let redCardFoundCount = 0
 const yoloVision = () => {
         
     const labels = [
@@ -366,53 +366,57 @@ const yoloVision = () => {
 
             if(parseInt(score) > aiConfig.Threshold * 100){
                 
-                
-
-                let [y1, x1, y2, x2] = boxes_data.slice(i * 4, (i + 1) * 4);
-                x1 *= ratios[0];
-                x2 *= ratios[0];
-                y1 *= ratios[1];
-                y2 *= ratios[1];
-                if(
-                    (
-                        y1 > 415 && y1 < 425 &&
-                        x1 > 300 && x1 < 310 &&
-                        y2 > 455 && y2 < 465 &&
-                        x2 > 330 && x2 < 340
-                    ) || (
-                        aiConfig.disableAreaCheck
-                    )
-                ){
-                    triggeredCallback && triggeredCallback()
-                    const width = x2 - x1;
-                    const height = y2 - y1;
-                
-                    console.log("boxes", y1, x1, y2, x2)
-                    // draw box.
-                    ctx.fillStyle = Colors.hexToRgba(color, 0.2);
-                    ctx.fillRect(x1, y1, width, height);
-                
-                    // draw border box.
-                    ctx.strokeStyle = color;
-                    ctx.lineWidth = Math.max(Math.min(ctx.canvas.width, ctx.canvas.height) / 200, 2.5);
-                    ctx.strokeRect(x1, y1, width, height);
-                
-                    // Draw the label background.
-                    ctx.fillStyle = color;
-                    const textWidth = ctx.measureText(klass + " - " + score + "%").width;
-                    const textHeight = parseInt(font, 10); // base 10
-                    const yText = y1 - (textHeight + ctx.lineWidth);
-                    ctx.fillRect(
-                        x1 - 1,
-                        yText < 0 ? 0 : yText, // handle overflow label box
-                        textWidth + ctx.lineWidth,
-                        textHeight + ctx.lineWidth
-                    );
-                
-                    // Draw labels
-                    ctx.fillStyle = "#ffffff";
-                    ctx.fillText(klass + " - " + score + "%", x1 - 1, yText < 0 ? 0 : yText);
+                redCardFoundCount++
+                if(redCardFoundCount >= aiConfig.triggerTimeThreshold){
+                    redCardFoundCount = 0;
+                    let [y1, x1, y2, x2] = boxes_data.slice(i * 4, (i + 1) * 4);
+                    x1 *= ratios[0];
+                    x2 *= ratios[0];
+                    y1 *= ratios[1];
+                    y2 *= ratios[1];
+                    if(
+                        (
+                            y1 > 415 && y1 < 425 &&
+                            x1 > 300 && x1 < 310 &&
+                            y2 > 455 && y2 < 465 &&
+                            x2 > 330 && x2 < 340
+                        ) || (
+                            aiConfig.disableAreaCheck
+                        )
+                    ){
+                        triggeredCallback && triggeredCallback()
+                        const width = x2 - x1;
+                        const height = y2 - y1;
+                    
+                        console.log("boxes", y1, x1, y2, x2)
+                        console.log("score", score)
+                        // draw box.
+                        ctx.fillStyle = Colors.hexToRgba(color, 0.2);
+                        ctx.fillRect(x1, y1, width, height);
+                    
+                        // draw border box.
+                        ctx.strokeStyle = color;
+                        ctx.lineWidth = Math.max(Math.min(ctx.canvas.width, ctx.canvas.height) / 200, 2.5);
+                        ctx.strokeRect(x1, y1, width, height);
+                    
+                        // Draw the label background.
+                        ctx.fillStyle = color;
+                        const textWidth = ctx.measureText(klass + " - " + score + "%").width;
+                        const textHeight = parseInt(font, 10); // base 10
+                        const yText = y1 - (textHeight + ctx.lineWidth);
+                        ctx.fillRect(
+                            x1 - 1,
+                            yText < 0 ? 0 : yText, // handle overflow label box
+                            textWidth + ctx.lineWidth,
+                            textHeight + ctx.lineWidth
+                        );
+                    
+                        // Draw labels
+                        ctx.fillStyle = "#ffffff";
+                        ctx.fillText(klass + " - " + score + "%", x1 - 1, yText < 0 ? 0 : yText);
+                    }
                 }
+              
 
             }
 
@@ -2261,7 +2265,7 @@ const inertButton = () => {
     const body = document.querySelector("body");
     body.appendChild(buttonsContainer);
 
-    console.log("auto gambling anti_robot_v43_test inserted")
+    console.log("auto gambling anti_robot_v44_test inserted")
 }
 
 
@@ -2285,11 +2289,11 @@ const loadVisionModel = () => {
     return new Promise(async (resolve, reject) => {
         try{
             await waitTensorflowjsLoad()
-            
-            const remoteModelUrl = `https://cdn.statically.io/gh/meisken/cdn_script/main/vision_model/${aiConfig.aiVersionName}/model.json`
+        
+            const remoteModelUrl = "https://cdn.statically.io/gh/meisken/cdn_script/main/vision_model/RED_CARD_V2/model.json"
             const model = await tf.loadGraphModel(remoteModelUrl, {
                 onProgress: (fractions) => {
-                    console.log(fractions)  
+                    console.log(fractions)
                 }
             });
             const dummyInput = tf.ones(model.inputs[0].shape);
