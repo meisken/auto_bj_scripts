@@ -858,13 +858,14 @@ const visionAi = async () => {
     const aiRunningCheck = () => {
         aiLastRunDateTimer = setInterval(() => {
             if((new Date()) - aiLastRunDate > 15000){
+                console.log("restart ai")
                 detectFrame()
             }
         }, 1000)
        
        
     }
-    aiRunningCheck()
+    aiRunningCheck();
     detectFrame();
 
 }    
