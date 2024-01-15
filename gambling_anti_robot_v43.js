@@ -844,6 +844,8 @@ const visionAi = async () => {
                 
             })
         }catch(err){
+            console.error("unexpected error restart card counting")
+            tf.engine().endScope()
             optimizedAnimationFrame(detectFrame);
         }
 
@@ -2331,7 +2333,7 @@ const inertButton = () => {
     const body = document.querySelector("body");
     body.appendChild(buttonsContainer);
 
-    console.log("auto gambling anti_robot_v43 inserted")
+    console.log("auto gambling anti_robot_v43.1 inserted")
 }
 
 
