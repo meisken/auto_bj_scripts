@@ -17,6 +17,17 @@ const clickSkipButton = () => {
 
 //#rendering-content ytd-display-ad-renderer
 }
+const insertStyleTag = () => {
+    const style = document.createElement('style');
+
+    style.textContent = `
+        #companion, #fulfilled-layout, #masthead-ad{
+            display: none !important;
+        }
+    `;
+    
+    document.head.appendChild(style);
+}
 const taimuRipu = async () => {
     await new Promise(async (resolve, _reject) => {
         const videoContainer = await waitForElementDisplayed("#movie_player");
@@ -76,6 +87,6 @@ const taimuRipu = async () => {
 (function() {
     'use strict';
     taimuRipu();
-
+    insertStyleTag()
     // Your code here...
 })();
