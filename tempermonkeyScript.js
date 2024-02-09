@@ -68,11 +68,36 @@
             }
 
             const aiConfig = {
-                aiVersionName: "RED_CARD_V2",
                 maxPlayedCard: 215,
                 framePerMilliseconds: 50,
-                Threshold: 0.85,
-                disableAreaCheck: true
+                Threshold: 0.9,
+                disableAreaCheck: false,
+                triggerTimeThreshold: 2,
+                sendTrueCount: false,
+                trueCountThreshold: 1.5,
+                detectableArea: {
+                    y: [
+                        {
+                            min: 415,
+                            max: 425
+                        },
+                        {
+                            min: 455,
+                            max: 465
+                        }
+                    ],
+                    x: [
+                        {
+                            min: 300,
+                            max: 310
+                        },
+                        {
+                            min: 330,
+                            max: 340
+                        }
+                    ]
+              
+                }
             }
         </script>
     `
@@ -84,7 +109,7 @@
     runScriptInsideIframe(tensorflow_js);
 
 
-    const autoGamblingScript = `<script defer src="https://cdn.statically.io/gh/meisken/cdn_script/main/gambling_anti_robot_v39_test.js" type="text/javascript"></script>`
+    const autoGamblingScript = `<script defer src="https://cdn.statically.io/gh/meisken/cdn_script/main/gambling_anti_robot_v36_custom2.js" type="text/javascript"></script>`
     runScriptInsideIframe(autoGamblingScript);
 })();
 
