@@ -2101,8 +2101,7 @@ const betMoney = async () => {
         }
 
         const matchedTrueCountThreshold = matchedKey(customAiConfig.trueCountList, playedCard)
-        console.log(`matched played count: ${matchedTrueCountThreshold}`, trueCount >= matchedTrueCountThreshold, playedCard)
-        if((betButton && trueCount >= matchedTrueCountThreshold) /*trueCount >= customAiConfig.trueCountThreshold) */|| freezeIndicator){
+        if((betButton && trueCount >= customAiConfig.trueCountList[matchedTrueCountThreshold]) /*trueCount >= customAiConfig.trueCountThreshold) */|| freezeIndicator){
             betButton.click();
             setFreezeTimer()
             freezeIndicator = false
@@ -2332,20 +2331,22 @@ const inertButton = () => {
     const body = document.querySelector("body");
     body.appendChild(buttonsContainer);
 
-    console.log("auto gambling anti_robot_v36_custom_7_test inserted")
+    console.log("auto gambling anti_robot_v36_custom_9 inserted")
 }
 
 
 const loadVisionModel = () => {
 
-    const waitTensorflowjsLoad = () => {
+    const waitTensorflowjsLoadAndAiconfig = () => {
         return new Promise((resolve,reject) => {
             const timer = setInterval(() => {
                 if(tf === undefined){
                     console.log("tensorflow is undefined")
                 }
-                
-                if(tf?.loadGraphModel) {     
+                if(aiConfig === undefined){
+                    console.warn("aiConfig is undefined")
+                }
+                if(tf?.loadGraphModel && typeof aiConfig === 'object') {     
                     resolve();
                     clearInterval(timer);
                 }
@@ -2355,7 +2356,7 @@ const loadVisionModel = () => {
 
     return new Promise(async (resolve, reject) => {
         try{
-            await waitTensorflowjsLoad()
+            await waitTensorflowjsLoadAndAiconfig()
         
             const remoteModelUrl = "https://cdn.statically.io/gh/meisken/cdn_script/main/vision_model/RED_CARD_V1/model.json"
             const model = await tf.loadGraphModel(remoteModelUrl, {

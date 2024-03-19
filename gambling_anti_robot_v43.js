@@ -20,7 +20,7 @@ const customAiConfig = aiConfig || {
     aiVersionName: "RED_CARD_V4",
     maxPlayedCard: 215,
     framePerMilliseconds: 50,
-    Threshold: 0.5,
+    Threshold: 0.9,
     disableAreaCheck: true,
     triggerTimeThreshold: 2,
     sendTrueCount: false,
