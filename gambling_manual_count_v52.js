@@ -256,9 +256,9 @@ const fetchTrueCount = async () => {
                 });
                
                 const data = await res.json();
-                if(data?.error === 'last update is over 5 minutes'){
-                    console.error('last update is over 5 minutes')
-                    reject(err)
+                if(data?.error){
+                    console.error(data?.error)
+                    reject(data?.error)
                     return
                 }
     
