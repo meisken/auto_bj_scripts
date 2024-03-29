@@ -256,7 +256,11 @@ const fetchTrueCount = async () => {
                 });
                
                 const data = await res.json();
-   
+                if(data?.error === 'last update is over 5 minutes'){
+                    console.error('last update is over 5 minutes')
+                    reject(err)
+                    return
+                }
     
                 const trueCount = data.multiplication / ( ( totalDecks * 52 - data.playedCard ) / 52 )
                 console.log(`fetch true count: ${trueCount}`, data)
