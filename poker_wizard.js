@@ -1,7 +1,15 @@
+// ==UserScript==
+// @name         New Userscript
+// @namespace    http://tampermonkey.net/
+// @version      2024-04-25
+// @description  try to take over the world!
+// @author       You
+// @match        https://app.gtowizard.com/*
+// @icon         https://www.google.com/s2/favicons?sz=64&domain=gtowizard.com
+// @grant        none
 // @require https://cdn.socket.io/4.7.5/socket.io.min.js
 // @noframes
 // ==/UserScript==
-
 
 const waitForElement = (query) => {
     return new Promise((resolve,reject) => {
@@ -60,10 +68,23 @@ function weightedRandom(items, weights) {
 const suitsOrder = ["s","h","d","c"]
 const numberOrder = ["a" , "k" , "q" , "j" , "10" , "9" , "8" , "7" , "6" , "5" , "4" , "3" , "2"]
 const positionOrder = ["UTG", "HJ", "CO", "BTN", "SB", "BB"]
-
+const headUpPositionOrder = ["SB", "BB"]
+const getRiverCardHspotCard = (name) => {
+    const allHspotcrdTitle = document.querySelectorAll(`.hspot-card > .hspotcrd_inner > .hspotcrd_title`);
+    const flopHspotCardIndex = [...allHspotcrdTitle].findIndex((HspotCard) => HspotCard.textContent.includes(name))
+    const flopHspotCard = flopHspotCardIndex > 0 ? document.querySelectorAll(`.hspot-card`)[flopHspotCardIndex] : undefined
+    
+    const [title, gtoPotSize] = flopHspotCardIndex > 0 ? allHspotcrdTitle[flopHspotCardIndex].textContent.split(" ") : [undefined, undefined]
+    return {
+        element: flopHspotCard,
+        title,
+        gtoPotSize: parseFloat(gtoPotSize)
+    }
+}
 let myHands = []
 let playerPositionData = []
 let bigBlind = 0
+let riverCards = []
 const waitForMyHand = async () => {
     return new Promise((resolve,reject) => {
         const timer = setInterval(() => {
@@ -75,13 +96,19 @@ const waitForMyHand = async () => {
     })
 }
 const clearData = () => {
+    riverCards = []
     myHands = []
     playerPositionData = []
-    const firstPosition = document.querySelectorAll(`div[data-tst="hs_0_preflop_UTG"] > .hspotcrd_inner > .hspotcrd_actions > .hspotcrd_action`)
+    let firstPosition = document.querySelectorAll(`div[data-tst="hs_0_preflop_UTG"] > .hspotcrd_inner > .hspotcrd_actions > .hspotcrd_action`)
+    if(firstPosition.length === 0){
+        firstPosition = document.querySelectorAll(`div[data-tst="hs_0_preflop_SB"] > .hspotcrd_inner > .hspotcrd_actions > .hspotcrd_action`)
+    }
+    console.log(firstPosition)
     firstPosition[1]?.click()
     setTimeout(() => {
         firstPosition[0]?.click()
     },300)
+    console.log("clear data")
 }
 const noSolutionCheck = () => {
     return new Promise((resolve, reject) => {
@@ -93,12 +120,19 @@ const noSolutionCheck = () => {
         }
     })
 }
-const actionRequestHandler = async (raiseLab,callback) => {
+const actionRequestHandler = async ({raiseLab,pot},callback) => {
     // try{
 
     // }catch(err){
 
     // }
+    console.log("action-request",raiseLab,pot)
+
+    let potSize = 0
+    console.log(pot,Array.isArray(pot))
+    if(Array.isArray(pot) && pot[0]){
+        potSize = pot[0] / 100
+    }
 
     try{
         await waitForMyHand()
@@ -119,22 +153,44 @@ const actionRequestHandler = async (raiseLab,callback) => {
             return possibleActions
 
         }
+
+        console.log("myHands",myHands)
+        const isSameSuit = myHands[0].szColor === myHands[1].szColor ? "s" : "o"
+        const isPair = myHands[0].szNumber === myHands[1].szNumber ? "" : isSameSuit
+    
+        const firstHandOrderIndex = numberOrder.findIndex((num) => num === myHands[0].szNumber)
+        const secondHandOrderIndex = numberOrder.findIndex((num) => num === myHands[1].szNumber)
+        const reorderHands = [firstHandOrderIndex, secondHandOrderIndex].sort((current, next) => current-next)
+        
+
+
+        let [firstHand, secondHand] = [numberOrder[reorderHands[0]],numberOrder[reorderHands[1]]]
+
+        const reorderHandsWithSuit = [{
+            index: firstHandOrderIndex,
+            suit: myHands[0].szColor
+        }, {
+            index: secondHandOrderIndex,
+            suit: myHands[1].szColor
+        }].sort((current, next) => current.index-next.index)
+
+        let [firstHandWithSuit, secondHandWithSuit] = [{
+            number: numberOrder[reorderHandsWithSuit[0].index],
+            suit: reorderHandsWithSuit[0].suit
+        },{
+            number: numberOrder[reorderHandsWithSuit[1].index],
+            suit: reorderHandsWithSuit[1].suit
+        }]
+
         const getStrategyCell = () => {
-            console.log("myHands",myHands)
-            const isSameSuit = myHands[0].szColor === myHands[1].szColor ? "s" : "o"
-            const isPair = myHands[0].szNumber === myHands[1].szNumber ? "" : isSameSuit
-        
-            const firstHandOrderIndex = numberOrder.findIndex((num) => num === myHands[0].szNumber)
-            const secondHandOrderIndex = numberOrder.findIndex((num) => num === myHands[1].szNumber)
-            const reorderHands = [firstHandOrderIndex, secondHandOrderIndex].sort((current, next) => current-next)
-            
-            let [firstHand, secondHand] = [numberOrder[reorderHands[0]],numberOrder[reorderHands[1]]]
-        
+
             if(firstHand === "10"){
                 firstHand = "T"
+                firstHandWithSuit.number = "T"
             }
             if(secondHand === "10"){
                 secondHand = "T"
+                secondHandWithSuit.number = "T"
             }
             const myHandsPlainText = `${firstHand.toUpperCase()}${secondHand.toUpperCase()}${isPair}`
             console.log(myHandsPlainText)
@@ -159,13 +215,23 @@ const actionRequestHandler = async (raiseLab,callback) => {
                         reject("get PossibleActions timeout")
                         clearInterval(timer)
                     }else{
-                        const possibleActions = strategyCell.querySelectorAll(".rtc_graph_legend > .rtc_graph_legend_item")
-                        if(!possibleActions || possibleActions.length === 0){
+                     
+                        const currentCell = `${firstHandWithSuit.number.toUpperCase()}${firstHandWithSuit.suit}${secondHandWithSuit.number.toUpperCase()}${secondHandWithSuit.suit}` 
+                        const handtableCell = document.querySelector(`div[data-tst="handtable_cell_${currentCell}"]`)
+                        if(!handtableCell){
                             strategyCell.click()
                         }else{
-                            resolve( possibleActions)
-                            clearInterval(timer)
+                            const possibleActions = handtableCell?.querySelectorAll(".htc_graph_legend > .htc_graph_legend_item")
+
+                            //const possibleActions = strategyCell.querySelectorAll(".rtc_graph_legend > .rtc_graph_legend_item")
+                            if(!possibleActions || possibleActions.length === 0){
+                                strategyCell.click()
+                            }else{
+                                resolve( possibleActions)
+                                clearInterval(timer)
+                            }
                         }
+                  
                     }
              
                 },100)
@@ -174,11 +240,15 @@ const actionRequestHandler = async (raiseLab,callback) => {
         const possibleActions = await getPossibleActions()
 
         console.log("possibleActions", possibleActions)
-        possibleActions.forEach((action) => {
-            const [nameElement, oddsElement] = action.querySelectorAll("& > span")
-            const name = nameElement.textContent.split(" ")[0]
-            const betSize = nameElement.textContent.split(" ")[1]
-            const odds = parseInt(oddsElement.textContent)
+        possibleActions.forEach((actionRow) => {
+            // const [nameElement, oddsElement] = action.querySelectorAll("& > span")
+            // const name = nameElement.textContent.split(" ")[0]
+            // const betSize = nameElement.textContent.split(" ")[1]
+            // const odds = parseInt(oddsElement.textContent)
+            const [name, betSize] = actionRow.querySelector(".htc_graph_legend_item_action_name")?.textContent.split(" ")
+     
+            const odds = parseFloat(actionRow.querySelector(".htc_graph_legend_item_action_value")?.textContent)
+            
             actionsAndOdds.push({
                 name,
                 betSize,
@@ -193,12 +263,34 @@ const actionRequestHandler = async (raiseLab,callback) => {
         )
         let targetActionButton = "btn" + actionsAndOdds[result.index].name
         
-        const targetBetSize = Math.round(parseFloat(actionsAndOdds[result.index].betSize)) * 100
+        const gtoResultBetSize = parseFloat(actionsAndOdds[result.index].betSize)
+            
+        let gtoPotSize = 1;
+        if(riverCards.length === 3){
+            gtoPotSize = getRiverCardHspotCard("flop").gtoPotSize
+        }else if(riverCards.length === 4){
+            gtoPotSize = getRiverCardHspotCard("turn").gtoPotSize
+        }else if(riverCards.length === 5){
+            gtoPotSize = getRiverCardHspotCard("river").gtoPotSize
+        }
+        
+       
+        let targetBetSize =  Math.round(gtoResultBetSize * bigBlind ) * 100
+        console.log("targetBetSize", targetBetSize)
+        if(riverCards.length > 2 ){
+            targetBetSize = Math.round(gtoResultBetSize / gtoPotSize *  potSize) * 100 
+            console.log("targetBetSize %", targetBetSize, {
+                gtoResultBetSize, gtoPotSize,  potSize
+            })
+        }
+    
         if(targetActionButton === "btnRaise" || targetActionButton === "btnBet"){
             targetActionButton = `btn${raiseLab}`
         }
-        callback(`${targetActionButton} ${targetBetSize === NaN ? 0 : targetBetSize * bigBlind}`)
+        console.log(`callback ${targetActionButton} ${!targetBetSize ? 0 : targetBetSize }`)
+        callback(`${targetActionButton} ${!targetBetSize ? 0 : targetBetSize }`)
     }catch(error){
+        console.log(error)
         callback("error")
     }
 
@@ -291,7 +383,7 @@ const getCardElement = (suit, number) => {
     })
 
 }
-let riverCards = []
+
 const riverDataHandler = async ({cards,cardLength}, callback) => {
 
 
@@ -302,7 +394,8 @@ const riverDataHandler = async ({cards,cardLength}, callback) => {
 
             if(cardLength === 3){ 
                 riverCards = cards 
-                const flopHspotCard = document.querySelector(`div[data-tst="hs_flop_E0E1E2"]`)
+                const flopHspotCard = getRiverCardHspotCard("flop").element
+            
                 if(!flopHspotCard){
                     const lastPosition = document.querySelector(`div[data-tst="hs_5_preflop_BB"]`) || document.querySelector(`div[data-tst="hs_5_preflop_BB_active"]`)
                     const buttons = lastPosition?.querySelectorAll(".hspotcrd_inner > .hspotcrd_actions > .hspotcrd_action")
@@ -407,24 +500,43 @@ const actionList = {
 }
 
 
-const getMatchedButton = (container, actionType, betSize ) => {
+const getMatchedButton = (container, actionType, betSize, pot ) => {
 
     return new Promise((resolve, reject) => {
 
         const buttons = container.querySelectorAll(".hspotcrd_inner > .hspotcrd_actions > .hspotcrd_action")
-
+        if(pot === 0){
+            pot = 1
+        }
+    
+        console.log("riverCards", riverCards)
+        let gtoPotSize = 1;
+        if(riverCards.length === 3){
+            gtoPotSize = getRiverCardHspotCard("flop").gtoPotSize
+        }else if(riverCards.length === 4){
+            gtoPotSize = getRiverCardHspotCard("turn").gtoPotSize
+        }else if(riverCards.length === 5){
+            gtoPotSize = getRiverCardHspotCard("river").gtoPotSize
+        }
 
         const detailedButtons = []
         buttons.forEach((btn, i) => {
             const text = btn.querySelector(".hspotcrd_action_text").textContent
-            const [name, size] = text.split(" ")
+            let [name, size] = text.split(" ")
+            size = parseFloat(size) || 0
+
+            if(size && size > 0){
+                size = size / gtoPotSize
+            }
+
             detailedButtons.push({
                 name,
-                size: parseFloat(size) || 0,
+                size,
                 domIndex: i,
                 buttonInDom: btn
             })
         })
+    
         const hasCall = detailedButtons.some((btn) => btn.name === "Call") 
         const hasCheck = detailedButtons.some((btn) => btn.name === "Check") 
         //bug: sometime utg posted a big blind if he checks no button will be matched
@@ -435,14 +547,25 @@ const getMatchedButton = (container, actionType, betSize ) => {
         }
 
         if(betSize > 0  && !hasCall ){
+            const betSizePercentage = betSize / pot;
+            console.log(detailedButtons)
             const matchedButtonBySize = detailedButtons.filter((btn) => btn.size > 0).reduce((current, next) => {
-    
-                if(betSize >= next.size){
+                console.log(betSizePercentage , next.size)
+
+                const deltaPrev = betSizePercentage - current.size  < 0 ? (betSizePercentage - current.size) * -1 : betSizePercentage - current.size
+                const deltaNext = betSizePercentage - next.size  < 0 ? (betSizePercentage - next.size) * -1 : betSizePercentage - current.size
+                if(deltaPrev > deltaNext){
                     return next
                 }
-                return current
+                if(deltaPrev <= deltaNext){
+                    return current
+                }  
+                // if(betSizePercentage >= next.size){
+                //     return next
+                // }
+                // return current
             })
-            console.log("matchedButtonBySize", matchedButtonBySize)
+            console.log("matchedButtonBySize", matchedButtonBySize, { betSizePercentage, detailedButtons })
             resolve(matchedButtonBySize)
         }else if(betSize === 0 || hasCall){
 
@@ -529,15 +652,36 @@ const getPlayerPositionName = (_playerIndex, tablePlayerCount) => {
     }
   
 }
+const getHeadsUpPosition = (_playerIndex) => {
+    const posDataLength = playerPositionData.length;
+    if(posDataLength === 0){
+        return headUpPositionOrder[0]
+    }else if(posDataLength === 1){
+        return headUpPositionOrder[1]
+    }else{
+        const previousData = playerPositionData.find(({playerIndex}) => playerIndex === _playerIndex)
+        return previousData.pos
+    }
+}
+const otherPlayerActionHandler = async ({bet, handChips, playerIndex, actionType, playerPositionName, tablePlayerCount, pot},callback) => {
 
-const otherPlayerActionHandler = async ({bet, handChips, playerIndex, actionType, playerPositionName, tablePlayerCount},callback) => {
+    let potSize = 0
   
-
-    console.log(bet, handChips, playerIndex, actionType, callback)
+    if(Array.isArray(pot) && pot[0]){
+        potSize = pot[0] / 100
+    }
+ 
+  
+    console.log(bet, handChips, playerIndex, actionType, pot,Array.isArray(pot))
 
     const normalizedActionName = actionList[actionType]
    
     playerPositionName = getPlayerPositionName(playerIndex, tablePlayerCount)
+ 
+    if(tablePlayerCount === 2){
+        playerPositionName = getHeadsUpPosition(playerIndex)
+    }
+    console.log(playerPositionName, tablePlayerCount)
     if(myHands.length > 0 && normalizedActionName){
     
         playerPositionData.push({
@@ -551,7 +695,7 @@ const otherPlayerActionHandler = async ({bet, handChips, playerIndex, actionType
             const container = await getMatchedContainer(playerPositionName)
             if(container ){
         
-                const matchedButton = await getMatchedButton(container, actionType, bet)
+                const matchedButton = await getMatchedButton(container, actionType, bet, potSize)
                 matchedButton.buttonInDom.click()
                 console.log(container, matchedButton)
                 callback({msg: "other-player-action working"})
@@ -653,10 +797,12 @@ const connectWebSocketServer = async () => {
     socket.on('river-data', (...args) => {
         executeActions(() => riverDataHandler(...args))
     })
-    socket.on('other-player-action', ({bet, handChips, playerIndex, actionType, playerPositionName, tablePlayerCount},callback) => {
+    socket.on('other-player-action', ({bet, handChips, playerIndex, actionType, playerPositionName, tablePlayerCount, pot},callback) => {
         handChips = handChips / 100
         bet = bet / 100
+ 
         if(actionType === "ACTION_SB"){
+            console.log(actionType)
             //clear data
             clearData()
         }
@@ -667,14 +813,14 @@ const connectWebSocketServer = async () => {
 
   
 
-        executeActions(() => otherPlayerActionHandler({bet, handChips, playerIndex, actionType, playerPositionName, tablePlayerCount},callback))
+        executeActions(() => otherPlayerActionHandler({bet, handChips, playerIndex, actionType, playerPositionName, tablePlayerCount, pot},callback))
     })
 
 }
 (function() {
     'use strict';
     connectWebSocketServer()
-    console.log("gto bot v12")
+    console.log("gto bot v21")
     // Your code here...
 })();
 
