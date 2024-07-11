@@ -108,6 +108,7 @@ const clearData = () => {
     setTimeout(() => {
         firstPosition[0]?.click()
     },300)
+
     console.log("clear data")
 }
 const noSolutionCheck = () => {
@@ -275,7 +276,7 @@ const actionRequestHandler = async ({raiseLab,pot},callback) => {
         }
         
        
-        let targetBetSize =  Math.round(gtoResultBetSize * bigBlind ) * 100
+        let targetBetSize =  Math.round(gtoResultBetSize * bigBlind - (bigBlind / 2)) * 100
         console.log("targetBetSize", targetBetSize)
         if(riverCards.length > 2 ){
             targetBetSize = Math.round(gtoResultBetSize / gtoPotSize *  potSize) * 100 
@@ -545,15 +546,15 @@ const getMatchedButton = (container, actionType, betSize, pot ) => {
             resolve(detailedButtons.find((btn) => btn.name === "Call") || detailedButtons.find((btn) => btn.name === "Raise"))
             return
         }
-
-        if(betSize > 0  && !hasCall ){
+        console.log("betSize", betSize)
+        if(betSize > 0 && !hasCall || betSize >= 200){
             const betSizePercentage = betSize / pot;
             console.log(detailedButtons)
             const matchedButtonBySize = detailedButtons.filter((btn) => btn.size > 0).reduce((current, next) => {
                 console.log(betSizePercentage , next.size)
 
                 const deltaPrev = betSizePercentage - current.size  < 0 ? (betSizePercentage - current.size) * -1 : betSizePercentage - current.size
-                const deltaNext = betSizePercentage - next.size  < 0 ? (betSizePercentage - next.size) * -1 : betSizePercentage - current.size
+                const deltaNext = betSizePercentage - next.size  < 0 ? (betSizePercentage - next.size) * -1 : betSizePercentage - next.size
                 if(deltaPrev > deltaNext){
                     return next
                 }
@@ -722,7 +723,7 @@ const otherPlayerActionHandler = async ({bet, handChips, playerIndex, actionType
   
     //refresh gto wizard by clicking the first utg fold when BB action is coming
 }
-const actionSequence = []
+let actionSequence = []
 let isRunning = false
 let currentId = 0;
 
@@ -820,7 +821,7 @@ const connectWebSocketServer = async () => {
 (function() {
     'use strict';
     connectWebSocketServer()
-    console.log("gto bot v21")
+    console.log("gto bot v26")
     // Your code here...
 })();
 
