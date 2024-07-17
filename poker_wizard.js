@@ -23,6 +23,20 @@ const waitForElement = (query) => {
         }, 100)
     })
 }
+const waitForElementAppear = (query) => {
+    return new Promise((resolve,reject) => {
+        console.log("waiting element", query)
+        const timer = setInterval(() => {
+            const element = document.querySelector(query)
+            if(element){
+                resolve()
+                clearInterval(timer)
+            }
+        }, 100)
+    })
+}
+
+
 const isPlainObject = (input) => {
     return input && !Array.isArray(input) && typeof input === 'object';
 }
@@ -69,6 +83,11 @@ const suitsOrder = ["s","h","d","c"]
 const numberOrder = ["a" , "k" , "q" , "j" , "10" , "9" , "8" , "7" , "6" , "5" , "4" , "3" , "2"]
 const positionOrder = ["UTG", "HJ", "CO", "BTN", "SB", "BB"]
 const headUpPositionOrder = ["SB", "BB"]
+let stopAuto = false
+const limpActionTable = {
+    allin: "limp-allin",
+    call: "limp-call"
+}
 const getRiverCardHspotCard = (name) => {
     const allHspotcrdTitle = document.querySelectorAll(`.hspot-card > .hspotcrd_inner > .hspotcrd_title`);
     const flopHspotCardIndex = [...allHspotcrdTitle].findIndex((HspotCard) => HspotCard.textContent.includes(name))
@@ -96,9 +115,11 @@ const waitForMyHand = async () => {
     })
 }
 const clearData = () => {
+    stopAuto = false;
     riverCards = []
     myHands = []
     playerPositionData = []
+    setTips("tips")
     let firstPosition = document.querySelectorAll(`div[data-tst="hs_0_preflop_UTG"] > .hspotcrd_inner > .hspotcrd_actions > .hspotcrd_action`)
     if(firstPosition.length === 0){
         firstPosition = document.querySelectorAll(`div[data-tst="hs_0_preflop_SB"] > .hspotcrd_inner > .hspotcrd_actions > .hspotcrd_action`)
@@ -288,11 +309,24 @@ const actionRequestHandler = async ({raiseLab,pot},callback) => {
         if(targetActionButton === "btnRaise" || targetActionButton === "btnBet"){
             targetActionButton = `btn${raiseLab}`
         }
-        console.log(`callback ${targetActionButton} ${!targetBetSize ? 0 : targetBetSize }`)
-        callback(`${targetActionButton} ${!targetBetSize ? 0 : targetBetSize }`)
+        const resultString = `${targetActionButton} ${!targetBetSize ? 0 : targetBetSize }`;
+        console.log(`callback ${resultString}`)
+        setTips(`${targetActionButton.replace("btn","")} ${!targetBetSize ? 0 : targetBetSize / 100 }`)
+
+        if(stopAuto){
+            callback(`Null 0`)
+        }else if(riverCards.length < 2){
+            setTimeout(() => {
+                callback(resultString)
+            }, 2000)
+        }else{
+            callback(resultString)
+        }
+    
+     
     }catch(error){
         console.log(error)
-        callback("error")
+        callback(error)
     }
 
     //callback actionsAndOdds[result.index]
@@ -430,8 +464,8 @@ const riverDataHandler = async ({cards,cardLength}, callback) => {
             }
             if(cardLength === 4){ riverCards[3] = cards[0] }
             if(cardLength === 5){ riverCards[4] = cards[0] }
-            const clearButton = document.querySelectorAll(`button[data-tst="btn_reset_cards"]`)[0]
-            clearButton?.click()
+            const clearButton = document.querySelectorAll(`button[data-tst="btn_reset_cards"]`)
+            clearButton[0]?.click()
             for (const { szColor, szNumber } of riverCards) {
                 const card = await getCardElement(szColor, szNumber)
           
@@ -501,7 +535,7 @@ const actionList = {
 }
 
 
-const getMatchedButton = (container, actionType, betSize, pot ) => {
+const getMatchedButton = (container, actionType, betSize, pot, handChips) => {
 
     return new Promise((resolve, reject) => {
 
@@ -538,15 +572,34 @@ const getMatchedButton = (container, actionType, betSize, pot ) => {
             })
         })
     
+        if(handChips === 0){
+            resolve(detailedButtons.find((btn) => btn.name === "Allin"))
+            return 
+        }
+
         const hasCall = detailedButtons.some((btn) => btn.name === "Call") 
         const hasCheck = detailedButtons.some((btn) => btn.name === "Check") 
         //bug: sometime utg posted a big blind if he checks no button will be matched
 
-        if(actionType === `ACTION_CHECK` && !hasCheck /*detailedButtons.some((btn) => btn.name === "Check") */ ){
+        if(handChips === 0){
+            return
+        }
+
+        if(riverCards.length < 2 && !hasCall && actionType === `ACTION_CALL`){
+            reject(limpActionTable.call)
+            return
+        }
+        if(riverCards.length < 2 && handChips === 0){
+            reject(limpActionTable.allin)
+            return
+        }
+
+        if( ( actionType === `ACTION_CHECK` && !hasCheck )/*detailedButtons.some((btn) => btn.name === "Check") */ ){
             resolve(detailedButtons.find((btn) => btn.name === "Call") || detailedButtons.find((btn) => btn.name === "Raise"))
             return
         }
         console.log("betSize", betSize)
+        //hasCall is a limp call checker 
         if(betSize > 0 && !hasCall || betSize >= 200){
             const betSizePercentage = betSize / pot;
             console.log(detailedButtons)
@@ -696,7 +749,7 @@ const otherPlayerActionHandler = async ({bet, handChips, playerIndex, actionType
             const container = await getMatchedContainer(playerPositionName)
             if(container ){
         
-                const matchedButton = await getMatchedButton(container, actionType, bet, potSize)
+                const matchedButton = await getMatchedButton(container, actionType, bet, potSize, handChips)
                 matchedButton.buttonInDom.click()
                 console.log(container, matchedButton)
                 callback({msg: "other-player-action working"})
@@ -705,6 +758,10 @@ const otherPlayerActionHandler = async ({bet, handChips, playerIndex, actionType
                 callback({msg: "other-player-action container not found"})
             }
         }catch(err){
+            if(err === limpActionTable.call || err === limpActionTable.allin){
+                stopAuto = true
+                setTips("limp")
+            }
             callback({msg: `other-player-action ${err}`})
             console.log(err)
         }
@@ -796,12 +853,17 @@ const connectWebSocketServer = async () => {
         playerHoleDataHandler(...args)
     })
     socket.on('river-data', (...args) => {
+        if(stopAuto){
+            return
+        }
         executeActions(() => riverDataHandler(...args))
     })
     socket.on('other-player-action', ({bet, handChips, playerIndex, actionType, playerPositionName, tablePlayerCount, pot},callback) => {
         handChips = handChips / 100
         bet = bet / 100
- 
+        if(stopAuto){
+            return
+        }
         if(actionType === "ACTION_SB"){
             console.log(actionType)
             //clear data
@@ -818,10 +880,27 @@ const connectWebSocketServer = async () => {
     })
 
 }
-(function() {
+const createSuggestionBoard = () => {
+    const container = document.querySelector('div[tour="historyevents"]')
+    const tipsElement =  document.createElement("div");
+    tipsElement.id = "gto-tips"
+    const tipsTextNode = document.createTextNode("tips")
+    tipsElement.appendChild(tipsTextNode)
+
+    tipsElement.style.cssText = `position:absolute;right:0;top:0;height:100%;min-width:200px;background:#222;display:flex;justify-content:center;align-items:center;z-index: 9999`
+    container.appendChild(tipsElement)
+}
+function setTips(text){
+    const tipsElement = document.querySelector("#gto-tips")
+    tipsElement.textContent = text
+}
+(async function() {
     'use strict';
+
     connectWebSocketServer()
-    console.log("gto bot v26")
+    await waitForElementAppear('div[tour="historyevents"]')
+    createSuggestionBoard()
+    console.log("gto bot v35")
     // Your code here...
 })();
 
