@@ -11,7 +11,7 @@
 
                 const iframe = body.querySelector("iframe") 
               
-                if(iframe.contentWindow.document.querySelector("#fmp4-video")){
+                if(iframe.contentWindow.document.querySelector("#video-wrapper > div > div > div > video")){
 
                     setTimeout(() => { //this is for making sure the iframe is newest, preventing sometime the iframe refresh several times
                         console.log("resolve iframe",iframe)
@@ -68,13 +68,21 @@
             }
 
             const aiConfig = {
+                aiVersionName: "RED_CARD_V4",
                 maxPlayedCard: 215,
                 framePerMilliseconds: 50,
                 Threshold: 0.9,
                 disableAreaCheck: false,
-                triggerTimeThreshold: 2,
-                sendTrueCount: false,
-                trueCountThreshold: 1.5,
+                triggerTimeThreshold: 1,
+                trueCountThreshold: 1.5, 
+                trueCountList: {
+                    "210" : 0,
+                    "200" : -0.3,
+                    "180" : -1,
+                    "170" : -2,
+                    "150" : -3,
+                    "100" : -4,
+                },
                 detectableArea: {
                     y: [
                         {
@@ -109,8 +117,10 @@
     runScriptInsideIframe(tensorflow_js);
 
 
-    const autoGamblingScript = `<script defer src="https://cdn.statically.io/gh/meisken/cdn_script/main/gambling_anti_robot_v36_custom2.js" type="text/javascript"></script>`
+    const autoGamblingScript = `<script defer src="https://cdn.statically.io/gh/meisken/cdn_script/main/gambling_anti_robot_v36_custom9.js" type="text/javascript"></script>`
     runScriptInsideIframe(autoGamblingScript);
 })();
+
+
 
 
