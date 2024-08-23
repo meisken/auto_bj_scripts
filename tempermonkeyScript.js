@@ -117,7 +117,7 @@
     runScriptInsideIframe(tensorflow_js);
 
 
-    const autoGamblingScript = `<script defer src="https://cdn.statically.io/gh/meisken/cdn_script/main/gambling_anti_robot_v36_custom9.js" type="text/javascript"></script>`
+    const autoGamblingScript = `<script defer src="https://cdn.statically.io/gh/meisken/cdn_script/main/gambling_anti_robot_v36_custom11_test" type="text/javascript"></script>`
     runScriptInsideIframe(autoGamblingScript);
 })();
 
